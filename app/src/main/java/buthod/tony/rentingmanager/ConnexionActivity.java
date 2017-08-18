@@ -1,7 +1,9 @@
 package buthod.tony.rentingmanager;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,36 +32,55 @@ public class ConnexionActivity extends Activity {
     private EditText mPassword = null;
     private Button mConnexion = null;
 
+    private boolean mPostRunning = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.connexion);
-        // Initialize fields
-        mLogin = (EditText) findViewById(R.id.login);
-        mPassword = (EditText) findViewById(R.id.password);
-        mConnexion = (Button) findViewById(R.id.connexion);
-        mConnexion.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Try to connect to the database.
-                new SendPostRequest(mLogin.getText().toString(),
-                        mPassword.getText().toString()).execute();
-            }
-        });
+        // Check preferences to automatic connection
+        SharedPreferences prefs = getSharedPreferences("autoConnection", Context.MODE_PRIVATE);
+        String prefLogin = prefs.getString("login", null);
+        String prefHash = prefs.getString("hash", null);
+        if (savedInstanceState == null && prefLogin != null && prefHash != null) {
+            new SendPostRequest(prefLogin, null, prefHash).execute();
+        }
+        else {
+            setContentView(R.layout.connexion);
+            // Initialize fields
+            mLogin = (EditText) findViewById(R.id.login);
+            mPassword = (EditText) findViewById(R.id.password);
+            mConnexion = (Button) findViewById(R.id.connexion);
+            mConnexion.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Try to connect to the database.
+                    if (mPostRunning) {
+                        Toast.makeText(getBaseContext(), "Connection already running",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        new SendPostRequest(mLogin.getText().toString(),
+                                mPassword.getText().toString(), null).execute();
+                    }
+                }
+            });
+        }
     }
 
     // Public inner class of the main activity
     public class SendPostRequest extends AsyncTask<String, Void, String> {
-        private String mLogin = "";
-        private String mPassword = "";
+        private String mLogin = null;
+        private String mPassword = null;
+        private String mHash = null;
         private boolean mSuccess = false;
 
-        public SendPostRequest(String login, String password) {
+        public SendPostRequest(String login, String password, String hash) {
             mLogin = login;
             mPassword = password;
+            mHash = hash;
         }
 
-        protected void onPreExecute(){
+        protected void onPreExecute() {
+            mPostRunning = true;
             mSuccess = false;
         }
 
@@ -70,7 +91,10 @@ public class ConnexionActivity extends Activity {
 
                 JSONObject postDataParams = new JSONObject();
                 postDataParams.put("login", mLogin);
-                postDataParams.put("password", mPassword);
+                if (mPassword != null)
+                    postDataParams.put("password", mPassword);
+                if (mHash != null)
+                    postDataParams.put("hash", mHash);
                 Log.e("params",postDataParams.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -99,16 +123,22 @@ public class ConnexionActivity extends Activity {
                         break;
                     }
                     in.close();
-                    mSuccess = true;
-                    return sb.toString();
+                    String res = sb.toString();
+                    if (res.equals("{}")) {
+                        res = "Access denied";
+                    }
+                    else {
+                        mSuccess = true;
+                    }
+                    return res;
 
                 }
                 else {
-                    return new String("Error : "+responseCode);
+                    return "Error : "+responseCode;
                 }
             }
             catch(Exception e){
-                return new String("Exception : " + e.getMessage());
+                return "Exception : " + e.getMessage();
             }
         }
 
@@ -118,10 +148,12 @@ public class ConnexionActivity extends Activity {
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 intent.putExtra("result", result);
                 startActivity(intent);
+                finish();
             }
             else {
                 Toast.makeText(getApplicationContext(), result, Toast.LENGTH_LONG).show();
             }
+            mPostRunning = false;
         }
     }
 
