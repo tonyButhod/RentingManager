@@ -18,17 +18,7 @@ $bdd_user->execute(array('login' => $_POST['login'],
 $user = $bdd_user->fetchAll();
 $bdd_user->closeCursor();
 
-if (isset($user[0])) {
-  $bdd_rents = $bdd->prepare('SELECT * FROM rent');
-  $bdd_rents->execute();
-  $rents = $bdd_rents->fetchAll();
-  $bdd_rents->closeCursor();
-  
-  echo json_encode(array('login' => $user[0]['login'],
-                         'password' => $user[0]['password'],
-                         'rents' => $rents));
-}
-else {
+if (!isset($user[0])) {
   echo "{}";
   exit();
 }

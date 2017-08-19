@@ -33,38 +33,48 @@ public class MainActivity extends Activity {
 
         mTitle = (TextView) findViewById(R.id.title);
         mRentsLayout = (LinearLayout) findViewById(R.id.rentsLayout);
-        // Recover previous results
-        Bundle extras = getIntent().getExtras();
-        String res = "{}";
-        if (extras != null) {
-            res = extras.getString("result", "{}");
+        // Check preferences to automatic connection
+        SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
+        String prefLogin = prefs.getString(SendPostRequest.LOGIN_KEY, null);
+        String prefHash = prefs.getString(SendPostRequest.HASH_KEY, null);
+        String script = SendPostRequest.GET_MAIN_RENTS;
+        if (savedInstanceState == null && prefLogin != null && prefHash != null) {
+            SendPostRequest req = new SendPostRequest(prefLogin, null, prefHash, script);
+            req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+                @Override
+                public void postExecute(boolean success, String result) {
+                    // Parse JSON file
+                    try {
+                        JSONObject resObj = new JSONObject(result);
+                        mLogin = resObj.getString(SendPostRequest.LOGIN_KEY);
+                        mPassword = resObj.getString(SendPostRequest.PASSWORD_KEY);
+                        JSONArray rents = resObj.getJSONArray(SendPostRequest.MAIN_RENTS_KEY);
+                        mTitle.setText("Welcome back " + mLogin);
+                        for (int i=0; i<rents.length(); i++) {
+                            JSONObject rent = rents.getJSONObject(i);
+                            Button button = new Button(getBaseContext());
+                            button.setText(rent.getString(SendPostRequest.RENT_NAME_KEY));
+                            LayoutParams params = new LayoutParams(
+                                    LayoutParams.MATCH_PARENT,
+                                    LayoutParams.WRAP_CONTENT);
+                            mRentsLayout.addView(button, params);
+                        }
+                        mTitle.invalidate();
+                        mRentsLayout.invalidate();
+                    }
+                    catch (JSONException e) {
+                        Intent intent = new Intent(getBaseContext(), ConnexionActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+            });
+            req.execute();
         }
-        // Parse JSON file
-        try {
-            JSONObject resObj = new JSONObject(res);
-            mLogin = resObj.getString("login");
-            mPassword = resObj.getString("password");
-            JSONArray rents = resObj.getJSONArray("rents");
-            mTitle.setText("Welcome back " + mLogin);
-            for (int i=0; i<rents.length(); i++) {
-                JSONObject rent = rents.getJSONObject(i);
-                Button button = new Button(this);
-                button.setText(rent.getString("name"));
-                LayoutParams params = new LayoutParams(
-                        LayoutParams.MATCH_PARENT,
-                        LayoutParams.WRAP_CONTENT);
-                mRentsLayout.addView(button, params);
-            }
-        }
-        catch (JSONException e) {
-            Intent intent = new Intent(this, ConnexionActivity.class);
+        else {
+            Intent intent = new Intent(getBaseContext(), ConnexionActivity.class);
             startActivity(intent);
             finish();
         }
-        SharedPreferences prefs = getSharedPreferences("autoConnection", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("login", mLogin);
-        editor.putString("hash", mPassword);
-        editor.apply();
     }
 }
