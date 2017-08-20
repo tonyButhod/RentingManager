@@ -38,10 +38,9 @@ public class ConnexionActivity extends Activity {
                             Toast.LENGTH_SHORT).show();
                 } else {
                     mPostRunning = true;
-                    String login = mLogin.getText().toString();
-                    String password = mPassword.getText().toString();
-                    String script = SendPostRequest.CONNEXION;
-                    SendPostRequest req = new SendPostRequest(login, password, null, script);
+                    SendPostRequest req = new SendPostRequest(SendPostRequest.CONNEXION);
+                    req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin.getText().toString());
+                    req.addPostParam(SendPostRequest.PASSWORD_KEY, mPassword.getText().toString());
                     req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
                         @Override
                         public void postExecute(boolean success, String result) {

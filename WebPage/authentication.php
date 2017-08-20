@@ -19,7 +19,6 @@ $user = $bdd_user->fetchAll();
 $bdd_user->closeCursor();
 
 if (!isset($user[0])) {
-  echo "{}";
   exit();
 }
 

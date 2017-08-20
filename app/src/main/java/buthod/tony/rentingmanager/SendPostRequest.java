@@ -1,6 +1,8 @@
 package buthod.tony.rentingmanager;
 
 import android.os.AsyncTask;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -24,24 +26,38 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
     public final static String HASH_KEY = "hash";
     public final static String PREFS = "connexionPrefs";
     public final static String MAIN_RENTS_KEY = "rents";
+    public final static String SUBRENTS_KEY = "subrents";
     public final static String RENT_NAME_KEY = "name";
 
     public final static String CONNEXION = "connexion.php";
     public final static String GET_MAIN_RENTS = "getMainRents.php";
+    public final static String GET_RENT_INFO = "getRentInfo.php";
 
-    private String mLogin = null;
-    private String mPassword = null;
-    private String mHash = null;
+    private JSONObject mPostDataParams = null;
     private String mScript = null;
     private boolean mSuccess = false;
 
     private OnPostExecute mOnPostExecute = null;
 
-    public SendPostRequest(String login, String password, String hash, String script) {
-        mLogin = login;
-        mPassword = password;
-        mHash = hash;
+    public SendPostRequest(String script) {
+        mPostDataParams = new JSONObject();
         mScript = script;
+    }
+
+    /**
+     * Add a post param to the request.
+     * @param key
+     * @param value
+     * @return Return true on success, false otherwise.
+     */
+    public boolean addPostParam(String key, Object value) {
+        try {
+            mPostDataParams.put(key, value);
+            return true;
+        }
+        catch (JSONException e) {
+            return false;
+        }
     }
 
     public void setOnPostExecute(OnPostExecute onPostExecute) {
@@ -56,12 +72,6 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
         try{
 
             URL url = new URL(WEBSITE_URL + mScript);
-            JSONObject postDataParams = new JSONObject();
-            postDataParams.put(LOGIN_KEY, mLogin);
-            if (mPassword != null)
-                postDataParams.put(PASSWORD_KEY, mPassword);
-            if (mHash != null)
-                postDataParams.put(HASH_KEY, mHash);
             // Headers
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setReadTimeout(5000 /* milliseconds */);
@@ -72,7 +82,7 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             // Connection
             OutputStream os = conn.getOutputStream();
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-            writer.write(getPostDataString(postDataParams));
+            writer.write(getPostDataString(mPostDataParams));
             writer.flush();
             writer.close();
             os.close();

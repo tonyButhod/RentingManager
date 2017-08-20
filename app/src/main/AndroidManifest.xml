@@ -20,11 +20,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ConnexionActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
+        <activity android:name=".ConnexionActivity"
+            android:exported="true">
+        </activity>
+        <activity android:name=".RentActivity"
+            android:exported="true">
         </activity>
     </application>
 

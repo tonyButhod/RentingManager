@@ -5,10 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,35 +39,28 @@ public class MainActivity extends Activity {
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
         String prefLogin = prefs.getString(SendPostRequest.LOGIN_KEY, null);
         String prefHash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        String script = SendPostRequest.GET_MAIN_RENTS;
-        if (savedInstanceState == null && prefLogin != null && prefHash != null) {
-            SendPostRequest req = new SendPostRequest(prefLogin, null, prefHash, script);
+        if (prefLogin != null && prefHash != null) {
+            SendPostRequest req = new SendPostRequest(SendPostRequest.GET_MAIN_RENTS);
+            req.addPostParam(SendPostRequest.LOGIN_KEY, prefLogin);
+            req.addPostParam(SendPostRequest.HASH_KEY, prefHash);
             req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
                 @Override
                 public void postExecute(boolean success, String result) {
-                    // Parse JSON file
-                    try {
-                        JSONObject resObj = new JSONObject(result);
-                        mLogin = resObj.getString(SendPostRequest.LOGIN_KEY);
-                        mPassword = resObj.getString(SendPostRequest.PASSWORD_KEY);
-                        JSONArray rents = resObj.getJSONArray(SendPostRequest.MAIN_RENTS_KEY);
-                        mTitle.setText("Welcome back " + mLogin);
-                        for (int i=0; i<rents.length(); i++) {
-                            JSONObject rent = rents.getJSONObject(i);
-                            Button button = new Button(getBaseContext());
-                            button.setText(rent.getString(SendPostRequest.RENT_NAME_KEY));
-                            LayoutParams params = new LayoutParams(
-                                    LayoutParams.MATCH_PARENT,
-                                    LayoutParams.WRAP_CONTENT);
-                            mRentsLayout.addView(button, params);
+                    if (success) {
+                        // Parse JSON file
+                        try {
+                            parseResult(result);
                         }
-                        mTitle.invalidate();
-                        mRentsLayout.invalidate();
+                        catch (JSONException e) {
+                            // Go to connection activity
+                            Intent intent = new Intent(getBaseContext(), ConnexionActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
                     }
-                    catch (JSONException e) {
-                        Intent intent = new Intent(getBaseContext(), ConnexionActivity.class);
-                        startActivity(intent);
-                        finish();
+                    else {
+                        Toast.makeText(getBaseContext(), "Connection error : " + result,
+                                Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -76,5 +71,34 @@ public class MainActivity extends Activity {
             startActivity(intent);
             finish();
         }
+    }
+
+    private void parseResult(String result) throws JSONException {
+        JSONObject resObj = new JSONObject(result);
+        mLogin = resObj.getString(SendPostRequest.LOGIN_KEY);
+        mPassword = resObj.getString(SendPostRequest.PASSWORD_KEY);
+        JSONArray rents = resObj.getJSONArray(SendPostRequest.MAIN_RENTS_KEY);
+        mTitle.setText("Welcome back " + mLogin);
+        for (int i=0; i<rents.length(); i++) {
+            JSONObject rent = rents.getJSONObject(i);
+            Button button = new Button(getBaseContext());
+            button.setText(rent.getString(SendPostRequest.RENT_NAME_KEY));
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getBaseContext(), RentActivity.class);
+                    intent.putExtra(SendPostRequest.RENT_NAME_KEY,
+                            ((Button) v).getText().toString());
+                    startActivity(intent);
+                }
+            });
+            // Add the button to the layout
+            LayoutParams params = new LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.WRAP_CONTENT);
+            mRentsLayout.addView(button, params);
+        }
+        mTitle.invalidate();
+        mRentsLayout.invalidate();
     }
 }
