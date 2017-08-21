@@ -26,6 +26,7 @@ CREATE TABLE `booking` (
   `id` int(11) NOT NULL,
   `rent` int(11) NOT NULL,
   `week` int(11) NOT NULL,
+  `year` int(11) NOT NULL,
   `tenant` varchar(100) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 

@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
         JSONObject resObj = new JSONObject(result);
         mLogin = resObj.getString(SendPostRequest.LOGIN_KEY);
         mPassword = resObj.getString(SendPostRequest.PASSWORD_KEY);
-        JSONArray rents = resObj.getJSONArray(SendPostRequest.MAIN_RENTS_KEY);
+        JSONArray rents = resObj.getJSONArray(SendPostRequest.RENTS_KEY);
         mTitle.setText("Welcome back " + mLogin);
         for (int i=0; i<rents.length(); i++) {
             JSONObject rent = rents.getJSONObject(i);

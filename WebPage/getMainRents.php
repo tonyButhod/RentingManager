@@ -2,11 +2,15 @@
 include('authentication.php');
 
 $req = $bdd->prepare('SELECT * FROM rent
-                      Where id NOT IN (
+                      WHERE id NOT IN (
                           SELECT DISTINCT subrent FROM subrent
-                      );');
+                      )
+                      ORDER BY id;');
 $req->execute();
-$mainRents = $req->fetchAll();
+$mainRents = [];
+while ($rent = $req->fetch()) {
+  $mainRents[] = array('name'=> $rent['name']);
+}
 $req->closeCursor();
 
   

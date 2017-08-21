@@ -21,13 +21,19 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class SendPostRequest extends AsyncTask<String, Void, String> {
     private final static String WEBSITE_URL = "https://website/";
+    public final static String ID_KEY = "id";
     public final static String LOGIN_KEY = "login";
     public final static String PASSWORD_KEY = "password";
     public final static String HASH_KEY = "hash";
     public final static String PREFS = "connexionPrefs";
-    public final static String MAIN_RENTS_KEY = "rents";
+    public final static String RENTS_KEY = "rents";
     public final static String SUBRENTS_KEY = "subrents";
     public final static String RENT_NAME_KEY = "name";
+    public final static String BOOKING_KEY = "booking";
+    public final static String WEEK_KEY = "week";
+    public final static String YEAR_KEY = "year";
+    public final static String RENT_KEY = "rent";
+    public final static String TENANT_KEY = "tenant";
 
     public final static String CONNEXION = "connexion.php";
     public final static String GET_MAIN_RENTS = "getMainRents.php";
