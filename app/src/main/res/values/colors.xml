@@ -4,5 +4,13 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="full">#FF7777</color>
-    <color name="halfFull">#FFBB88</color>
+    <color name="full_disabled">#FFAAAA</color>
+    <color name="full_focused">#DD5555</color>
+    <color name="half_full">#FFBB88</color>
+    <color name="half_full_disabled">#FFDDAA</color>
+    <color name="half_full_focused">#EEAA66</color>
+    <color name="default_bg">#FFFFFF</color>
+    <color name="default_bg_disabled">#FFFFFF</color>
+    <color name="default_bg_focused">#EEEEEE</color>
+    <color name="stroke_today">#FFC6292D</color>
 </resources>

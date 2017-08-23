@@ -7,7 +7,7 @@
 
     <Spinner
         android:id="@+id/list_subrents"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
     </Spinner>
@@ -19,5 +19,18 @@
         android:layout_height="wrap_content">
 
     </FrameLayout>
+
+    <TextView
+        android:id="@+id/label_tenants"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/caldroid_container"
+        android:text="@string/tenants"/>
+
+    <TextView
+        android:id="@+id/tenants"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/label_tenants"/>
 
 </RelativeLayout>

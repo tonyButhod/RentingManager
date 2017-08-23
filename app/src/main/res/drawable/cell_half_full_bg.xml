@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:caldroid="http://schemas.android.com/apk/res-auto">
+
+    <item android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp"
+        caldroid:state_date_today="true" android:state_pressed="true">
+        <shape android:shape="rectangle" >
+            <stroke android:width="2dp" android:color="@color/stroke_today" />
+            <solid android:color="@color/half_full_focused"/>
+        </shape>
+    </item>
+    <item android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp"
+        caldroid:state_date_today="true" caldroid:state_date_selected="true">
+        <shape android:shape="rectangle" >
+            <stroke android:width="2dp" android:color="@color/stroke_today" />
+            <solid android:color="@color/half_full_focused"/>
+        </shape>
+    </item>
+    <item android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp"
+        caldroid:state_date_today="true" caldroid:state_date_prev_next_month="true">
+        <shape android:shape="rectangle" >
+            <stroke android:width="2dp" android:color="@color/stroke_today" />
+            <solid android:color="@color/half_full_disabled"/>
+        </shape>
+    </item>
+    <item android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp"
+        caldroid:state_date_today="true" caldroid:state_date_disabled="true">
+        <shape android:shape="rectangle" >
+            <stroke android:width="2dp" android:color="@color/stroke_today" />
+            <solid android:color="@color/half_full_disabled"/>
+        </shape>
+    </item>
+    <item android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp"
+        caldroid:state_date_today="true">
+        <shape android:shape="rectangle" >
+            <stroke android:width="2dp" android:color="@color/stroke_today" />
+            <solid android:color="@color/half_full"/>
+        </shape>
+    </item>
+    <item android:drawable="@color/half_full_focused" android:state_pressed="true"/>
+    <item android:drawable="@color/half_full_focused" caldroid:state_date_selected="true"/>
+    <item android:drawable="@color/half_full_disabled" caldroid:state_date_prev_next_month="true"/>
+    <item android:drawable="@color/half_full_disabled" caldroid:state_date_disabled="true"/>
+    <item android:drawable="@color/half_full"/>
+
+</selector>

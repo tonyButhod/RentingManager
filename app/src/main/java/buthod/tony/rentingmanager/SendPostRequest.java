@@ -94,23 +94,24 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             os.close();
             // Check the result
             int responseCode = conn.getResponseCode();
+            StringBuffer sb = new StringBuffer("");
             if (responseCode == HttpsURLConnection.HTTP_OK) {
                 mSuccess = true;
                 BufferedReader in=new BufferedReader(
                         new InputStreamReader(conn.getInputStream())
                 );
-                StringBuffer sb = new StringBuffer("");
                 String line;
                 while ((line = in.readLine()) != null) {
                     sb.append(line);
                     break;
                 }
                 in.close();
-                return sb.toString();
             }
             else {
-                return String.valueOf(responseCode);
+                sb.append(String.valueOf(responseCode));
             }
+            conn.disconnect();
+            return sb.toString();
         }
         catch(Exception e){
             return e.getMessage();

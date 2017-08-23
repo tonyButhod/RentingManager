@@ -15,6 +15,7 @@ import java.util.Map;
 
 public class RentalBooking {
 
+    // The name of the whole rent.
     private String mRent = null;
     // Contains sub-rents but also the whole rent.
     private HashMap<String, HashMap<Date, String>> mSubrents = null;
@@ -48,6 +49,26 @@ public class RentalBooking {
 
     public Iterable<Map.Entry<Date,String>> getBookingEntrySet(String rent) {
         return mSubrents.get(rent).entrySet();
+    }
+
+    public Map<String, String> getTenants(String rent, Date date) {
+        HashMap<String, String> tenants = new HashMap<>();
+        if (rent.equals(mRent)) {
+            for (Map.Entry<String, HashMap<Date, String>> entry : mSubrents.entrySet()) {
+                String tenant = entry.getValue().get(date);
+                if (tenant != null)
+                    tenants.put(entry.getKey(), tenant);
+            }
+        }
+        else {
+            String tenant = mSubrents.get(rent).get(date);
+            if (tenant != null)
+                tenants.put(rent, tenant);
+            tenant = mSubrents.get(mRent).get(date);
+            if (tenant != null)
+                tenants.put(mRent, tenant);
+        }
+        return tenants;
     }
 
     /**

@@ -3,19 +3,18 @@ package buthod.tony.rentingmanager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.roomorama.caldroid.CaldroidFragment;
+import com.roomorama.caldroid.CaldroidListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,11 +33,13 @@ import java.util.Map;
 public class RentActivity extends FragmentActivity {
 
     private Spinner mSpinner = null;
-    private String mWholeRent = null;
+    private CaldroidBookingFragment mCaldroidFragment = null;
+    private TextView mTenant = null;
 
     private RentalBooking mBooking = null;
+    private String mWholeRent = null;
+    private Date mSelectedDate = null;
 
-    private CaldroidFragment mCaldroidFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +47,7 @@ public class RentActivity extends FragmentActivity {
         super.setContentView(R.layout.rent);
 
         mSpinner = (Spinner) findViewById(R.id.list_subrents);
+        mTenant = (TextView) findViewById(R.id.tenants);
         // Recover the main rent name
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -65,6 +67,7 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 updateCaldroidView();
+                updateTenantInfo();
             }
 
             @Override
@@ -73,14 +76,23 @@ public class RentActivity extends FragmentActivity {
             }
         });
         // Set calendar view
-        mCaldroidFragment = new CaldroidFragment();
+        mCaldroidFragment = new CaldroidBookingFragment();
         Bundle args = new Bundle();
         Calendar cal = Calendar.getInstance();
         args.putInt(CaldroidFragment.MONTH, cal.get(Calendar.MONTH) + 1);
         args.putInt(CaldroidFragment.YEAR, cal.get(Calendar.YEAR));
         args.putInt(CaldroidFragment.START_DAY_OF_WEEK, CaldroidFragment.MONDAY);
         mCaldroidFragment.setArguments(args);
-
+        // Set caldroid listener
+        mCaldroidFragment.setCaldroidListener(new CaldroidListener() {
+            @Override
+            public void onSelectDate(Date date, View view) {
+                // Select the whole week and update tenant
+                selectWeekFromDate(date);
+                updateTenantInfo();
+            }
+        });
+        // Commit changes
         FragmentTransaction t = getSupportFragmentManager().beginTransaction();
         t.replace(R.id.caldroid_container, mCaldroidFragment);
         t.commit();
@@ -174,14 +186,11 @@ public class RentActivity extends FragmentActivity {
     private void updateCaldroidView() {
         int nb_subrents = mBooking.getNumberSubrent()-1; // Doesn't count the whole rent.
         HashMap<Date, Integer> nbBookingMap = new HashMap<>();
-        HashMap<Date, Drawable> bgDateMap = new HashMap<>();
-        // Draw background in orange if a sub-rent is rented or red if the whole rent is rented.
-        Drawable fullDraw = new ColorDrawable(ContextCompat.getColor(this, R.color.full));
-        Drawable halfFullDraw = new ColorDrawable(ContextCompat.getColor(this, R.color.halfFull));
         String selectedItem = mSpinner.getSelectedItem().toString();
+
         // Check which sub-rent is selected.
         // If the whole rent is selected, all sub-rent are selected
-        Iterable<String> subrentSet = null;
+        Iterable<String> subrentSet;
         if (selectedItem.equals(mWholeRent))
             // If the whole location is selected, all sub-rents are selected
             subrentSet = mBooking.getSubrentSet();
@@ -192,12 +201,15 @@ public class RentActivity extends FragmentActivity {
                 selectedSet.add(mWholeRent);
             subrentSet = selectedSet;
         }
+
         // Iterate on sub-rents
+        mCaldroidFragment.clearBooking();
         for (String subrent : subrentSet) {
             // Iterate on booking per sub-rent
             if (subrent.equals(selectedItem) || subrent.equals(mWholeRent)) {
                 for (Map.Entry<Date, String> booking : mBooking.getBookingEntrySet(subrent))
-                    putWeekDrawable(bgDateMap, booking.getKey(), fullDraw);
+                    mCaldroidFragment.setWeekBookingForDate(booking.getKey(),
+                            CaldroidBookingFragment.FULL);
             }
             else {
                 for (Map.Entry<Date, String> booking : mBooking.getBookingEntrySet(subrent)) {
@@ -207,32 +219,45 @@ public class RentActivity extends FragmentActivity {
                     Integer nb_booking = nbBookingMap.get(date);
                     int new_nb_booking = ((nb_booking!=null)?nb_booking:0) + 1;
                     nbBookingMap.put(date, new_nb_booking);
-                    if (new_nb_booking == nb_subrents)
-                        putWeekDrawable(bgDateMap, date, fullDraw);
-                    else
-                        putWeekDrawable(bgDateMap, date, halfFullDraw);
+                    // Put the week state in CaldroidBookingFragment
+                    int state = (new_nb_booking == nb_subrents)?
+                            CaldroidBookingFragment.FULL : CaldroidBookingFragment.HALF_FULL;
+                    mCaldroidFragment.setWeekBookingForDate(date, state);
                 }
             }
         }
-        if (bgDateMap.size() == 0)
-            mCaldroidFragment.getBackgroundForDateTimeMap().clear();
-        else
-            mCaldroidFragment.setBackgroundDrawableForDates(bgDateMap);
         mCaldroidFragment.refreshView();
     }
 
-    /**
-     * Add a specific drawable in a hash map for 7 dates.
-     * @param map The hash map to be modified.
-     * @param date The starting date for the 7 days.
-     * @param draw The drawable to add.
-     */
-    private void putWeekDrawable(HashMap<Date, Drawable> map, Date date, Drawable draw) {
+    private void updateTenantInfo() {
+        // Update the tenant
+        if (mSelectedDate != null) {
+            Map<String, String> tenants = mBooking.getTenants(
+                    mSpinner.getSelectedItem().toString(), mSelectedDate);
+            String text = "";
+            for (Map.Entry<String, String> entry : tenants.entrySet()) {
+                text += entry.getKey() + " : " + entry.getValue() + "\n";
+            }
+            mTenant.setText(text);
+        }
+        else {
+            mTenant.setText("");
+        }
+        mTenant.invalidate();
+    }
+
+    private void selectWeekFromDate(Date date) {
+        // Get the date of previous saturday
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
-        for (int i=0; i<7; i++) {
-            map.put(cal.getTime(), draw);
-            cal.add(Calendar.DATE, 1);
-        }
+        int diffDate = (cal.get(Calendar.DAY_OF_WEEK) - Calendar.SATURDAY + 7) % 7;
+        cal.add(Calendar.DATE, -diffDate);
+        Date startDate = cal.getTime();
+        cal.add(Calendar.DATE, 6);
+        Date endDate = cal.getTime();
+        // Put all the week as selected
+        mCaldroidFragment.setSelectedDates(startDate, endDate);
+        mCaldroidFragment.refreshView();
+        mSelectedDate = startDate;
     }
 }
