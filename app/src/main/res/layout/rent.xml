@@ -20,17 +20,24 @@
 
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/label_tenants"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/add_booking"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/caldroid_container"
+        android:text="+"/>
+
+    <TextView
+        android:id="@+id/tenants_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/add_booking"
         android:text="@string/tenants"/>
 
     <TextView
         android:id="@+id/tenants"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/label_tenants"/>
+        android:layout_below="@id/tenants_label"/>
 
 </RelativeLayout>

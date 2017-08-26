@@ -100,7 +100,8 @@ CREATE TABLE `user` (
 -- Indexes for table `booking`
 --
 ALTER TABLE `booking`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `rent` (`rent`,`week`,`year`);
 
 --
 -- Indexes for table `owner`
@@ -155,7 +156,7 @@ ALTER TABLE `price`
 -- AUTO_INCREMENT for table `rent`
 --
 ALTER TABLE `rent`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `subrent`
 --

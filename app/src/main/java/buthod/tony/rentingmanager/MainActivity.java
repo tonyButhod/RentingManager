@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
     private LinearLayout mRentsLayout = null;
 
     private String mLogin = null;
-    private String mPassword = null;
+    private String mHash = null; // Contain the hash of the password
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
     private void parseResult(String result) throws JSONException {
         JSONObject resObj = new JSONObject(result);
         mLogin = resObj.getString(SendPostRequest.LOGIN_KEY);
-        mPassword = resObj.getString(SendPostRequest.PASSWORD_KEY);
+        mHash = resObj.getString(SendPostRequest.HASH_KEY);
         JSONArray rents = resObj.getJSONArray(SendPostRequest.RENTS_KEY);
         mTitle.setText("Welcome back " + mLogin);
         for (int i=0; i<rents.length(); i++) {

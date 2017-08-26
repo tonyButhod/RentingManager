@@ -4,5 +4,9 @@
     <string name="password">Password</string>
     <string name="connexion">Connexion</string>
     <string name="accessDenied">Access denied</string>
+    <string name="tenant">Tenant :</string>
     <string name="tenants">Tenants :</string>
+    <string name="neRentFree">Rent not free this week</string>
+    <string name="noDateSelected">Please select a week on the calendar</string>
+    <string name="addBookingTitle">Add a booking</string>
 </resources>

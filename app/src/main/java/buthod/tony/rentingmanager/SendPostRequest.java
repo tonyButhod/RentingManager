@@ -21,23 +21,28 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class SendPostRequest extends AsyncTask<String, Void, String> {
     private final static String WEBSITE_URL = "https://website/";
-    public final static String ID_KEY = "id";
-    public final static String LOGIN_KEY = "login";
-    public final static String PASSWORD_KEY = "password";
-    public final static String HASH_KEY = "hash";
-    public final static String PREFS = "connexionPrefs";
-    public final static String RENTS_KEY = "rents";
-    public final static String SUBRENTS_KEY = "subrents";
-    public final static String RENT_NAME_KEY = "name";
-    public final static String BOOKING_KEY = "booking";
-    public final static String WEEK_KEY = "week";
-    public final static String YEAR_KEY = "year";
-    public final static String RENT_KEY = "rent";
-    public final static String TENANT_KEY = "tenant";
 
-    public final static String CONNEXION = "connexion.php";
-    public final static String GET_MAIN_RENTS = "getMainRents.php";
-    public final static String GET_RENT_INFO = "getRentInfo.php";
+    public final static String
+            ID_KEY = "id",
+            LOGIN_KEY = "login",
+            PASSWORD_KEY = "password",
+            HASH_KEY = "hash",
+            PREFS = "connexionPrefs",
+            RENTS_KEY = "rents",
+            SUBRENTS_KEY = "subrents",
+            RENT_NAME_KEY = "name",
+            BOOKING_KEY = "booking",
+            WEEK_KEY = "week",
+            YEAR_KEY = "year",
+            RENT_KEY = "rent",
+            TENANT_KEY = "tenant";
+
+    public final static String
+            CONNEXION = "connexion.php",
+            GET_MAIN_RENTS = "getMainRents.php",
+            GET_RENT_INFO = "getRentInfo.php",
+            ADD_BOOKING = "addBooking.php";
+
 
     private JSONObject mPostDataParams = null;
     private String mScript = null;

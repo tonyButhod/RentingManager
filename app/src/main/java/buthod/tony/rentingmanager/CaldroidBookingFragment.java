@@ -15,6 +15,7 @@ public class CaldroidBookingFragment extends CaldroidFragment {
     public final static String BOOKING = "booking";
 
     public final static int
+                FREE = 0,
                 HALF_FULL = 1,
                 FULL = 2;
 

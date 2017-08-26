@@ -1,14 +1,19 @@
 package buthod.tony.rentingmanager;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,9 +38,13 @@ import java.util.Map;
 
 public class RentActivity extends FragmentActivity {
 
+    private String mLogin = null;
+    private String mHash = null; // Contain the hash of the password
+
     private Spinner mSpinner = null;
     private CaldroidBookingFragment mCaldroidFragment = null;
     private TextView mTenant = null;
+    private Button mAddBooking = null;
 
     private RentalBooking mBooking = null;
     private String mWholeRent = null;
@@ -48,6 +58,7 @@ public class RentActivity extends FragmentActivity {
 
         mSpinner = (Spinner) findViewById(R.id.list_subrents);
         mTenant = (TextView) findViewById(R.id.tenants);
+        mAddBooking = (Button) findViewById(R.id.add_booking);
         // Recover the main rent name
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -61,7 +72,7 @@ public class RentActivity extends FragmentActivity {
             return;
         }
         // Initialize mBooking attribute
-        mBooking = new RentalBooking(mWholeRent);
+        mBooking = new RentalBooking();
         // OnClickListener for the spinner
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -73,6 +84,13 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 // Do nothing
+            }
+        });
+        // Add event listener to add a booking
+        mAddBooking.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAddBookingDialog();
             }
         });
         // Set calendar view
@@ -98,12 +116,12 @@ public class RentActivity extends FragmentActivity {
         t.commit();
         // Send a post request to access information
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
-        String login = prefs.getString(SendPostRequest.LOGIN_KEY, null);
-        String hash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        if (login != null && hash != null) {
+        mLogin = prefs.getString(SendPostRequest.LOGIN_KEY, null);
+        mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
+        if (mLogin != null && mHash != null) {
             SendPostRequest req = new SendPostRequest(SendPostRequest.GET_RENT_INFO);
-            req.addPostParam(SendPostRequest.LOGIN_KEY, login);
-            req.addPostParam(SendPostRequest.HASH_KEY, hash);
+            req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin);
+            req.addPostParam(SendPostRequest.HASH_KEY, mHash);
             req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
             req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
                 @Override
@@ -157,6 +175,7 @@ public class RentActivity extends FragmentActivity {
             mBooking.addSubrent(name, id);
             adapter.add(name);
         }
+        mBooking.setWholeRent(mWholeRent);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinner.setAdapter(adapter);
         mSpinner.invalidate();
@@ -259,5 +278,94 @@ public class RentActivity extends FragmentActivity {
         mCaldroidFragment.setSelectedDates(startDate, endDate);
         mCaldroidFragment.refreshView();
         mSelectedDate = startDate;
+    }
+
+    private void showAddBookingDialog() {
+        // Check if a date is selected
+        if (mSelectedDate == null) {
+            Toast.makeText(getBaseContext(), R.string.noDateSelected,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Check if at least one rent is free
+        List<String> freeRents = mBooking.getFreeRentsForDate(mSelectedDate);
+        if (freeRents.size() == 0) {
+            Toast.makeText(getBaseContext(), R.string.neRentFree,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Initialize an alert dialog
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(R.string.addBookingTitle);
+        // Set the view of the alert dialog
+        LayoutInflater inflater = getLayoutInflater();
+        View alertView = inflater.inflate(R.layout.add_booking, null);
+        alert.setView(alertView);
+        // Get useful view
+        final EditText tenantInput = (EditText) alertView.findViewById(R.id.tenant_edit);
+        final Spinner rentChoice = (Spinner) alertView.findViewById(R.id.rent_choice);
+        // Populate the spinner of alert dialog with free rents.
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
+                android.R.layout.simple_spinner_item);
+        adapter.addAll(freeRents);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        rentChoice.setAdapter(adapter);
+        // If the selected rent in the activity is free, set this rent as default in dialog.
+        if (freeRents.contains(mWholeRent)) {
+            int defaultPos = adapter.getPosition(mWholeRent);
+            rentChoice.setSelection(defaultPos);
+        }
+        // Set up the buttons
+        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String rent = rentChoice.getSelectedItem().toString();
+                String tenant = tenantInput.getText().toString();
+                addBookingPostRequest(rent, tenant);
+            }
+        });
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        alert.show();
+    }
+
+    private void addBookingPostRequest(final String rent, final String tenant) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(mSelectedDate);
+        final Date dateRequest = mSelectedDate;
+        final int rentId = mBooking.getIdRent(rent);
+        SendPostRequest req = new SendPostRequest(SendPostRequest.ADD_BOOKING);
+        req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin);
+        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+        req.addPostParam(SendPostRequest.WEEK_KEY, cal.get(Calendar.WEEK_OF_YEAR));
+        req.addPostParam(SendPostRequest.YEAR_KEY, cal.get(Calendar.YEAR));
+        req.addPostParam(SendPostRequest.RENT_KEY, rentId);
+        req.addPostParam(SendPostRequest.TENANT_KEY, tenant);
+        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+            @Override
+            public void postExecute(boolean success, String result) {
+                if (success) {
+                    if (result.equals("true")) {
+                        Toast.makeText(getBaseContext(), "New booking added",
+                                Toast.LENGTH_SHORT).show();
+                        mBooking.addBooking(rentId, dateRequest, tenant);
+                        updateCaldroidView();
+                    }
+                    else {
+                        Toast.makeText(getBaseContext(), "No booking added : "+result,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+                else {
+                    Toast.makeText(getBaseContext(), "Connexion error : " + result,
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        req.execute();
     }
 }

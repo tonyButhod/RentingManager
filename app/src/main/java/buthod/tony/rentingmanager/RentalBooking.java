@@ -2,8 +2,10 @@ package buthod.tony.rentingmanager;
 
 import android.util.SparseArray;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,27 +18,35 @@ import java.util.Map;
 public class RentalBooking {
 
     // The name of the whole rent.
-    private String mRent = null;
+    private String mWholeRent = null;
     // Contains sub-rents but also the whole rent.
     private HashMap<String, HashMap<Date, String>> mSubrents = null;
     private SparseArray<String> mIdMap = null;
 
-    /**
-     * @param rent The name of the rent.
-     */
-    public RentalBooking(String rent) {
-        mRent = rent;
+    public RentalBooking() {
         mSubrents = new HashMap<>();
         mIdMap = new SparseArray<>();
-    }
-
-    public String getRent() {
-        return mRent;
     }
 
     public void addSubrent(String name, int id) {
         mSubrents.put(name, new HashMap<Date, String>());
         mIdMap.put(id, name);
+        // The first rent added is set as the whole rent
+        if (mWholeRent == null)
+            mWholeRent = name;
+    }
+
+    public String getWholeRent() {
+        return mWholeRent;
+    }
+
+    /**
+     * Throw an IllegalArgumentException if the rent hasn't been added.
+     */
+    public void setWholeRent(String rent) {
+        if (!mSubrents.containsKey(rent))
+            throw new IllegalArgumentException();
+        mWholeRent = rent;
     }
 
     public int getNumberSubrent() {
@@ -47,13 +57,19 @@ public class RentalBooking {
         return mSubrents.keySet();
     }
 
+    /**
+     * Throw an error if the rent is not in mSubrents.
+     */
     public Iterable<Map.Entry<Date,String>> getBookingEntrySet(String rent) {
         return mSubrents.get(rent).entrySet();
     }
 
+    /**
+     * Throw an error if the rent is not in mSubrents.
+     */
     public Map<String, String> getTenants(String rent, Date date) {
         HashMap<String, String> tenants = new HashMap<>();
-        if (rent.equals(mRent)) {
+        if (rent.equals(mWholeRent)) {
             for (Map.Entry<String, HashMap<Date, String>> entry : mSubrents.entrySet()) {
                 String tenant = entry.getValue().get(date);
                 if (tenant != null)
@@ -64,9 +80,9 @@ public class RentalBooking {
             String tenant = mSubrents.get(rent).get(date);
             if (tenant != null)
                 tenants.put(rent, tenant);
-            tenant = mSubrents.get(mRent).get(date);
+            tenant = mSubrents.get(mWholeRent).get(date);
             if (tenant != null)
-                tenants.put(mRent, tenant);
+                tenants.put(mWholeRent, tenant);
         }
         return tenants;
     }
@@ -87,5 +103,53 @@ public class RentalBooking {
         String rent = mIdMap.get(id);
         if (rent != null)
             addBooking(rent, date, tenant);
+    }
+
+    /**
+     * Return -1 if the rent is not in mIdMap.
+     */
+    public int getIdRent(String rent) {
+        // Need to browse manually because SparseArray uses references for comparison.
+        int idMapSize = mIdMap.size();
+        for (int i=0; i<idMapSize; ++i) {
+            if (mIdMap.valueAt(i).equals(rent))
+                return mIdMap.keyAt(i);
+        }
+        return -1;
+    }
+
+    /**
+     * Return the list of free rents for the given date.
+     * This contains the whole rent if nothing is booked for this date,
+     * and the free sub-rents.
+     *
+     * Throw an error if the rent is not in mSubrents.
+     */
+    public List<String> getFreeRentsForDate(Date date) {
+        ArrayList<String> freeRents = new ArrayList<>();
+        // Check if the whole rent is rented
+        if (mSubrents.get(mWholeRent).containsKey(date)) {
+            // The whole rent is rented, there are no free sub-rents
+            return freeRents;
+        }
+        boolean oneBookingForDate = false;
+        // Iterates on mIdMap to keep the same rent name order as RentActivity.
+        for (int i=0; i<mIdMap.size(); i++) {
+            String rent = mIdMap.valueAt(i);
+            if (!rent.equals(mWholeRent)) {
+                HashMap<Date, String> booking = mSubrents.get(rent);
+                if (booking.containsKey(date)) {
+                    // The sub-rent is rented for the given date
+                    oneBookingForDate = true;
+                } else {
+                    // The sub-rent is free for the given date
+                    freeRents.add(rent);
+                }
+            }
+        }
+        // If no sub-rent is rented for the given date, the whole rent can be rented
+        if (!oneBookingForDate)
+            freeRents.add(0, mWholeRent);
+        return freeRents;
     }
 }
