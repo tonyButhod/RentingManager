@@ -14,7 +14,7 @@ while ($rent = $req->fetch()) {
 $req->closeCursor();
 
   
-echo json_encode(array('login' => $user[0]['login'],
-                       'hash' => $user[0]['password'],
+echo json_encode(array('login' => $user['login'],
+                       'hash' => $user['password'],
                        'rents' => $mainRents));
 ?>

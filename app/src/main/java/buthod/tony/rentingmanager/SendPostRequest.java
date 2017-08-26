@@ -27,6 +27,8 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             LOGIN_KEY = "login",
             PASSWORD_KEY = "password",
             HASH_KEY = "hash",
+            ACCESS_KEY = "access",
+            OWNERS_KEY = "owners",
             PREFS = "connexionPrefs",
             RENTS_KEY = "rents",
             SUBRENTS_KEY = "subrents",

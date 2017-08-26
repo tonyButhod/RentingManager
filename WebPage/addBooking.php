@@ -7,9 +7,14 @@ if (!isset($_POST['rent']) || !isset($_POST['tenant']) ||
 }
 
 // Check if the id is in the table of rents and if the table is a sub-rent or not.
-$req = $bdd->prepare('SELECT s.rent, s.subrent FROM rent r, subrent s 
-                      WHERE (r.id = s.rent AND s.rent = :rent)
-                          OR (r.id = s.subrent AND s.subrent = :rent);');
+$req = $bdd->prepare('SELECT subrent, COUNT(rent) as nb FROM (
+                          SELECT rent, subrent FROM subrent
+                          WHERE subrent = :rent
+                          UNION
+                          SELECT id as rent, id as subrent FROM rent
+                          WHERE id = :rent
+                      ) as temp
+                      GROUP BY subrent;');
 $req->execute(array('rent' => $_POST['rent']));
 $result = $req->fetch();
 $req->closeCursor();
@@ -17,11 +22,26 @@ $req->closeCursor();
 $isSubrent = false;
 if ($result) {
   // Check if the rent id is a sub-rent or the whole rent
-  if ($result['subrent'] == $_POST['rent'])
+  if ($result['nb'] > 1)
     $isSubrent = true;
 }
 else {
   // The given rent id is unknown
+  exit();
+}
+
+// Check if the user has the right to add a booking
+$req = $bdd->prepare('SELECT DISTINCT o.user FROM owner o, subrent s
+                      WHERE o.rent = :rent
+                      OR (o.rent = s.rent AND s.subrent = :rent);');
+$req->execute(array('rent' => $_POST['rent']));
+$owners = [];
+while ($res = $req->fetch())
+  $owners[] = $res['user'];
+$req->closeCursor();
+
+if ($user['access'] == 0 && !in_array($user['id'], $owners)) {
+  echo "No booking right";
   exit();
 }
 

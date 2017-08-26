@@ -132,6 +132,7 @@ ALTER TABLE `subrent`
 --
 ALTER TABLE `user`
   ADD PRIMARY KEY (`id`);
+  ADD UNIQUE KEY `login` (`login`);
 
 --
 -- AUTO_INCREMENT for dumped tables

@@ -9,4 +9,5 @@
     <string name="neRentFree">Rent not free this week</string>
     <string name="noDateSelected">Please select a week on the calendar</string>
     <string name="addBookingTitle">Add a booking</string>
+    <string name="noBookingRight">You haven\'t the right to add a booking</string>
 </resources>

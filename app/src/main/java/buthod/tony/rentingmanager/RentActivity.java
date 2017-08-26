@@ -40,6 +40,13 @@ public class RentActivity extends FragmentActivity {
 
     private String mLogin = null;
     private String mHash = null; // Contain the hash of the password
+    private int mAccessLevel = 0; // User access level
+    /* 0 : read access for everything, edit only if the user is owner of the rent.
+       1 : add booking every where even if the user is not the owner.
+       2 : edit everything.
+     */
+    private List<String> mOwners = new ArrayList<>();
+    private boolean mBookingRight = false;
 
     private Spinner mSpinner = null;
     private CaldroidBookingFragment mCaldroidFragment = null;
@@ -164,6 +171,18 @@ public class RentActivity extends FragmentActivity {
     private void parseInfo(String result) throws JSONException {
         JSONObject resObj = new JSONObject(result);
 
+        /* Get the access level and owners of the rent */
+        mAccessLevel = resObj.getInt(SendPostRequest.ACCESS_KEY);
+        JSONArray owners = resObj.getJSONArray(SendPostRequest.OWNERS_KEY);
+        for (int i=0; i<owners.length(); i++) {
+            JSONObject owner = owners.getJSONObject(i);
+            String ownerLogin = owner.getString(SendPostRequest.LOGIN_KEY);
+            mOwners.add(ownerLogin);
+        }
+        // Update the booking right of the user
+        if (mAccessLevel >= 1 || mOwners.contains(mLogin)) {
+            mBookingRight = true;
+        }
         /* Populate the list of rents */
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
                 android.R.layout.simple_spinner_item);
@@ -281,6 +300,12 @@ public class RentActivity extends FragmentActivity {
     }
 
     private void showAddBookingDialog() {
+        // Check if the user has the right to add a booking
+        if (!mBookingRight) {
+            Toast.makeText(getBaseContext(), R.string.noBookingRight,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
         // Check if a date is selected
         if (mSelectedDate == null) {
             Toast.makeText(getBaseContext(), R.string.noDateSelected,

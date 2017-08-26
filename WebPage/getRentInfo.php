@@ -15,12 +15,20 @@ $req = $bdd->prepare('SELECT * FROM rent
 $req->execute(array('name' => $_POST['name']));
 $subrents = [];
 $subrents_id = [];
+$idRent = -1;
 while ($rent = $req->fetch()) {
   $subrents[] = array('id' => $rent['id'],
                       'name' => $rent['name']);
   $subrents_id[] = $rent['id'];
+  if ($_POST['name'] == $rent['name'])
+    $idRent = $rent['id'];
 }
 $req->closeCursor();
+// If idRent == -1, the rent name is invalid
+if ($idRent == -1) {
+  echo "Invalid rent name";
+  exit();
+}
 
 // Recover information concerning booking
 $req = $bdd->prepare('SELECT * FROM booking
@@ -35,9 +43,21 @@ while ($res = $req->fetch()) {
 }
 $req->closeCursor();
 
+// Select owners of the rent
+$req = $bdd->prepare('SELECT u.* FROM user u, owner o
+                      WHERE u.id = o.user AND o.rent = :rent;');
+$req->execute(array('rent' => $idRent));
+$owners = []; // A rent can be owned by several people.
+while ($res = $req->fetch()) {
+  $owners[] = array('login' => $res['login']);
+}
+$req->closeCursor();
+
   
-echo json_encode(array('login' => $user[0]['login'],
-                       'hash' => $user[0]['password'],
+echo json_encode(array('login' => $user['login'],
+                       'hash' => $user['password'],
+                       'access' => $user['access'],
+                       'owners' => $owners,
                        'subrents' => $subrents,
                        'booking' => $booking));
 ?>

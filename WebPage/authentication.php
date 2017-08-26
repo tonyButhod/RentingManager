@@ -15,10 +15,10 @@ else {
 }
 $bdd_user->execute(array('login' => $_POST['login'],
                          'password' => $password));
-$user = $bdd_user->fetchAll();
+$user = $bdd_user->fetch();
 $bdd_user->closeCursor();
 
-if (!isset($user[0])) {
+if (!$user) {
   exit();
 }
 
