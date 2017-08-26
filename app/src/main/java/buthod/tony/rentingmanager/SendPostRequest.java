@@ -43,7 +43,8 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             CONNEXION = "connexion.php",
             GET_MAIN_RENTS = "getMainRents.php",
             GET_RENT_INFO = "getRentInfo.php",
-            ADD_BOOKING = "addBooking.php";
+            ADD_BOOKING = "addBooking.php",
+            REMOVE_BOOKING = "removeBooking.php";
 
 
     private JSONObject mPostDataParams = null;

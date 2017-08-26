@@ -6,8 +6,10 @@
     <string name="accessDenied">Access denied</string>
     <string name="tenant">Tenant :</string>
     <string name="tenants">Tenants :</string>
-    <string name="neRentFree">Rent not free this week</string>
+    <string name="noRentFree">Rent not free this week</string>
+    <string name="noRentBusy">No booking to remove</string>
     <string name="noDateSelected">Please select a week on the calendar</string>
     <string name="addBookingTitle">Add a booking</string>
+    <string name="removeBookingTitle">Remove a booking</string>
     <string name="noBookingRight">You haven\'t the right to add a booking</string>
 </resources>

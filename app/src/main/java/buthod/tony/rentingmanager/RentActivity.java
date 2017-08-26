@@ -52,6 +52,7 @@ public class RentActivity extends FragmentActivity {
     private CaldroidBookingFragment mCaldroidFragment = null;
     private TextView mTenant = null;
     private Button mAddBooking = null;
+    private Button mRemoveBooking = null;
 
     private RentalBooking mBooking = null;
     private String mWholeRent = null;
@@ -66,6 +67,7 @@ public class RentActivity extends FragmentActivity {
         mSpinner = (Spinner) findViewById(R.id.list_subrents);
         mTenant = (TextView) findViewById(R.id.tenants);
         mAddBooking = (Button) findViewById(R.id.add_booking);
+        mRemoveBooking = (Button) findViewById(R.id.remove_booking);
         // Recover the main rent name
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -93,11 +95,17 @@ public class RentActivity extends FragmentActivity {
                 // Do nothing
             }
         });
-        // Add event listener to add a booking
+        // Add event listener to add and remove a booking
         mAddBooking.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showAddBookingDialog();
+            }
+        });
+        mRemoveBooking.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showRemoveBookingDialog();
             }
         });
         // Set calendar view
@@ -315,7 +323,7 @@ public class RentActivity extends FragmentActivity {
         // Check if at least one rent is free
         List<String> freeRents = mBooking.getFreeRentsForDate(mSelectedDate);
         if (freeRents.size() == 0) {
-            Toast.makeText(getBaseContext(), R.string.neRentFree,
+            Toast.makeText(getBaseContext(), R.string.noRentFree,
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -336,8 +344,9 @@ public class RentActivity extends FragmentActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         rentChoice.setAdapter(adapter);
         // If the selected rent in the activity is free, set this rent as default in dialog.
-        if (freeRents.contains(mWholeRent)) {
-            int defaultPos = adapter.getPosition(mWholeRent);
+        String selectedRent = mSpinner.getSelectedItem().toString();
+        if (freeRents.contains(selectedRent)) {
+            int defaultPos = adapter.getPosition(selectedRent);
             rentChoice.setSelection(defaultPos);
         }
         // Set up the buttons
@@ -382,6 +391,110 @@ public class RentActivity extends FragmentActivity {
                     }
                     else {
                         Toast.makeText(getBaseContext(), "No booking added : "+result,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+                else {
+                    Toast.makeText(getBaseContext(), "Connexion error : " + result,
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        req.execute();
+    }
+
+    private void showRemoveBookingDialog() {
+        // Check if the user has the right to add a booking
+        if (!mBookingRight) {
+            Toast.makeText(getBaseContext(), R.string.noBookingRight,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Check if a date is selected
+        if (mSelectedDate == null) {
+            Toast.makeText(getBaseContext(), R.string.noDateSelected,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Check if at least one rent is busy
+        List<String> busyRents = mBooking.getBusyRentsForDate(mSelectedDate);
+        if (busyRents.size() == 0) {
+            Toast.makeText(getBaseContext(), R.string.noRentBusy,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Initialize an alert dialog
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(R.string.removeBookingTitle);
+        // Set the view of the alert dialog
+        LayoutInflater inflater = getLayoutInflater();
+        View alertView = inflater.inflate(R.layout.remove_booking, null);
+        alert.setView(alertView);
+        // Get useful view
+        final TextView tenantView = (TextView) alertView.findViewById(R.id.tenant);
+        final Spinner rentChoice = (Spinner) alertView.findViewById(R.id.rent_choice);
+        rentChoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedRent = rentChoice.getSelectedItem().toString();
+                tenantView.setText(mBooking.getTenant(selectedRent, mSelectedDate));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        // Populate the spinner of alert dialog with free rents.
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
+                android.R.layout.simple_spinner_item);
+        adapter.addAll(busyRents);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        rentChoice.setAdapter(adapter);
+        // If the selected rent in the activity is free, set this rent as default in dialog.
+        String selectedRent = mSpinner.getSelectedItem().toString();
+        if (busyRents.contains(selectedRent)) {
+            int defaultPos = adapter.getPosition(selectedRent);
+            rentChoice.setSelection(defaultPos);
+        }
+        // Set up the buttons
+        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                removeBookingPostRequest(rentChoice.getSelectedItem().toString());
+            }
+        });
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        alert.show();
+    }
+
+    private void removeBookingPostRequest(final String rent) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(mSelectedDate);
+        final Date dateRequest = mSelectedDate;
+        final int rentId = mBooking.getIdRent(rent);
+        SendPostRequest req = new SendPostRequest(SendPostRequest.REMOVE_BOOKING);
+        req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin);
+        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+        req.addPostParam(SendPostRequest.WEEK_KEY, cal.get(Calendar.WEEK_OF_YEAR));
+        req.addPostParam(SendPostRequest.YEAR_KEY, cal.get(Calendar.YEAR));
+        req.addPostParam(SendPostRequest.RENT_KEY, rentId);
+        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+            @Override
+            public void postExecute(boolean success, String result) {
+                if (success) {
+                    if (result.equals("true")) {
+                        Toast.makeText(getBaseContext(), "Booking removed",
+                                Toast.LENGTH_SHORT).show();
+                        mBooking.removeBooking(rentId, dateRequest);
+                        updateCaldroidView();
+                    }
+                    else {
+                        Toast.makeText(getBaseContext(), "No booking removed : "+result,
                                 Toast.LENGTH_SHORT).show();
                     }
                 }

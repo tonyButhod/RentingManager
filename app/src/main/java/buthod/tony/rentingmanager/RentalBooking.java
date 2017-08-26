@@ -65,6 +65,10 @@ public class RentalBooking {
     }
 
     /**
+     * Output tenants in a rent at a given date.
+     * Check also tenants in sub-rents.
+     * Map keys correspond to rents names, and values are tenants names.
+     *
      * Throw an error if the rent is not in mSubrents.
      */
     public Map<String, String> getTenants(String rent, Date date) {
@@ -88,6 +92,17 @@ public class RentalBooking {
     }
 
     /**
+     * Output the tenant in a rent at a given date.
+     * If their is no tenant, null is output.
+     * Doesn't check sub-rents.
+     *
+     * Throw an error if the rent is not in mSubrents.
+     */
+    public String getTenant(String rent, Date date) {
+        return mSubrents.get(rent).get(date);
+    }
+
+    /**
      * Add a booking to a sub-rent or the whole rent.
      * @param rent The name of the sub-rent or the whole rent.
      * @param date The booking date. Corresponds to the saturday of the rented week.
@@ -103,6 +118,23 @@ public class RentalBooking {
         String rent = mIdMap.get(id);
         if (rent != null)
             addBooking(rent, date, tenant);
+    }
+
+    /**
+     * Remove a booking from a sub-rent or the whole rent.
+     * @param rent The name of the sub-rent or the whole rent.
+     * @param date The booking date. Corresponds to the saturday of the rented week.
+     */
+    public void removeBooking(String rent, Date date) {
+        HashMap<Date, String> booking = mSubrents.get(rent);
+        if (booking != null) {
+            booking.remove(date);
+        }
+    }
+    public void removeBooking(int id, Date date) {
+        String rent = mIdMap.get(id);
+        if (rent != null)
+            removeBooking(rent, date);
     }
 
     /**
@@ -151,5 +183,21 @@ public class RentalBooking {
         if (!oneBookingForDate)
             freeRents.add(0, mWholeRent);
         return freeRents;
+    }
+
+    /**
+     * Return the list of rents with a tenant for a given date.
+     */
+    public List<String> getBusyRentsForDate(Date date) {
+        ArrayList<String> busyRents = new ArrayList<>();
+        // Iterates on mIdMap to keep the same rent name order as RentActivity.
+        for (int i=0; i<mIdMap.size(); i++) {
+            String rent = mIdMap.valueAt(i);
+            if (mSubrents.get(rent).containsKey(date)) {
+                // The sub-rent is rented for the given date
+                busyRents.add(rent);
+            }
+        }
+        return busyRents;
     }
 }
