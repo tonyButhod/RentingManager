@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">Logis</string>
-    <string name="login">Login</string>
+    <string name="username">Username</string>
     <string name="password">Password</string>
-    <string name="connexion">Connexion</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_out">Sign out</string>
     <string name="accessDenied">Access denied</string>
     <string name="tenant">Tenant :</string>
     <string name="tenants">Tenants :</string>
@@ -11,5 +12,5 @@
     <string name="noDateSelected">Please select a week on the calendar</string>
     <string name="addBookingTitle">Add a booking</string>
     <string name="removeBookingTitle">Remove a booking</string>
-    <string name="noBookingRight">You haven\'t the right to add a booking</string>
+    <string name="noBookingRight">You haven\'t the right to add or remove a booking</string>
 </resources>

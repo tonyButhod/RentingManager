@@ -20,7 +20,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ConnexionActivity"
+        <activity android:name=".LoginActivity"
             android:exported="true">
         </activity>
         <activity android:name=".RentActivity"

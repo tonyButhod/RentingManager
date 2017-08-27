@@ -13,23 +13,23 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ConnexionActivity extends Activity {
+public class LoginActivity extends Activity {
 
-    private EditText mLogin = null;
+    private EditText mUsername = null;
     private EditText mPassword = null;
-    private Button mConnexion = null;
+    private Button mSignIn = null;
 
     private boolean mPostRunning = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.connexion);
+        setContentView(R.layout.login);
         // Initialize fields
-        mLogin = (EditText) findViewById(R.id.login);
+        mUsername = (EditText) findViewById(R.id.username);
         mPassword = (EditText) findViewById(R.id.password);
-        mConnexion = (Button) findViewById(R.id.connexion);
-        mConnexion.setOnClickListener(new View.OnClickListener() {
+        mSignIn = (Button) findViewById(R.id.sign_in);
+        mSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Try to connect to the database.
@@ -38,8 +38,8 @@ public class ConnexionActivity extends Activity {
                             Toast.LENGTH_SHORT).show();
                 } else {
                     mPostRunning = true;
-                    SendPostRequest req = new SendPostRequest(SendPostRequest.CONNEXION);
-                    req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin.getText().toString());
+                    SendPostRequest req = new SendPostRequest(SendPostRequest.LOGIN);
+                    req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername.getText().toString());
                     req.addPostParam(SendPostRequest.PASSWORD_KEY, mPassword.getText().toString());
                     req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
                         @Override
@@ -55,16 +55,16 @@ public class ConnexionActivity extends Activity {
 
     private void checkResultRequest(boolean success, String result) {
         if (success) {
-            // Save login and hash in sharedPreferences
+            // Save username and hash in sharedPreferences
             SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS,
                     Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             try {
                 JSONObject resObj = new JSONObject(result);
-                String login = resObj.getString(SendPostRequest.LOGIN_KEY);
-                String password = resObj.getString(SendPostRequest.PASSWORD_KEY);
-                editor.putString(SendPostRequest.LOGIN_KEY, login);
-                editor.putString(SendPostRequest.HASH_KEY, password);
+                String username = resObj.getString(SendPostRequest.USERNAME_KEY);
+                String hash = resObj.getString(SendPostRequest.HASH_KEY);
+                editor.putString(SendPostRequest.USERNAME_KEY, username);
+                editor.putString(SendPostRequest.HASH_KEY, hash);
                 // Need to write data immediately
                 editor.commit();
                 // Start main activity
@@ -73,7 +73,7 @@ public class ConnexionActivity extends Activity {
                 finish();
             }
             catch (JSONException e) {
-                Toast.makeText(getBaseContext(), "Login or Password invalid",
+                Toast.makeText(getBaseContext(), "Username or Password invalid",
                         Toast.LENGTH_SHORT).show();
                 mPassword.setText("");
                 mPassword.invalidate();

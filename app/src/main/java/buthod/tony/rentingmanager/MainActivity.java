@@ -24,8 +24,9 @@ public class MainActivity extends Activity {
 
     private TextView mTitle = null;
     private LinearLayout mRentsLayout = null;
+    private Button mSignOut = null;
 
-    private String mLogin = null;
+    private String mUsername = null;
     private String mHash = null; // Contain the hash of the password
 
     @Override
@@ -35,13 +36,14 @@ public class MainActivity extends Activity {
 
         mTitle = (TextView) findViewById(R.id.title);
         mRentsLayout = (LinearLayout) findViewById(R.id.rentsLayout);
+        mSignOut = (Button) findViewById(R.id.sign_out);
         // Check preferences to automatic connection
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
-        String prefLogin = prefs.getString(SendPostRequest.LOGIN_KEY, null);
+        String prefUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         String prefHash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        if (prefLogin != null && prefHash != null) {
+        if (prefUsername != null && prefHash != null) {
             SendPostRequest req = new SendPostRequest(SendPostRequest.GET_MAIN_RENTS);
-            req.addPostParam(SendPostRequest.LOGIN_KEY, prefLogin);
+            req.addPostParam(SendPostRequest.USERNAME_KEY, prefUsername);
             req.addPostParam(SendPostRequest.HASH_KEY, prefHash);
             req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
                 @Override
@@ -53,7 +55,7 @@ public class MainActivity extends Activity {
                         }
                         catch (JSONException e) {
                             // Go to connection activity
-                            Intent intent = new Intent(getBaseContext(), ConnexionActivity.class);
+                            Intent intent = new Intent(getBaseContext(), LoginActivity.class);
                             startActivity(intent);
                             finish();
                         }
@@ -67,18 +69,35 @@ public class MainActivity extends Activity {
             req.execute();
         }
         else {
-            Intent intent = new Intent(getBaseContext(), ConnexionActivity.class);
+            Intent intent = new Intent(getBaseContext(), LoginActivity.class);
             startActivity(intent);
             finish();
         }
+        // Listener for sign out
+        mSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Remove username and hash in sharedPreferences
+                SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS,
+                        Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.remove(SendPostRequest.USERNAME_KEY);
+                editor.remove(SendPostRequest.PASSWORD_KEY);
+                editor.apply();
+                // Start login activity
+                Intent intent = new Intent(getBaseContext(), LoginActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 
     private void parseResult(String result) throws JSONException {
         JSONObject resObj = new JSONObject(result);
-        mLogin = resObj.getString(SendPostRequest.LOGIN_KEY);
+        mUsername = resObj.getString(SendPostRequest.USERNAME_KEY);
         mHash = resObj.getString(SendPostRequest.HASH_KEY);
         JSONArray rents = resObj.getJSONArray(SendPostRequest.RENTS_KEY);
-        mTitle.setText("Welcome back " + mLogin);
+        mTitle.setText(mUsername);
         for (int i=0; i<rents.length(); i++) {
             JSONObject rent = rents.getJSONObject(i);
             Button button = new Button(getBaseContext());

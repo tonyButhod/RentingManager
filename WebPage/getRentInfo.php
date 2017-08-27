@@ -49,12 +49,12 @@ $req = $bdd->prepare('SELECT u.* FROM user u, owner o
 $req->execute(array('rent' => $idRent));
 $owners = []; // A rent can be owned by several people.
 while ($res = $req->fetch()) {
-  $owners[] = array('login' => $res['login']);
+  $owners[] = array('username' => $res['username']);
 }
 $req->closeCursor();
 
   
-echo json_encode(array('login' => $user['login'],
+echo json_encode(array('username' => $user['username'],
                        'hash' => $user['password'],
                        'access' => $user['access'],
                        'owners' => $owners,

@@ -24,7 +24,7 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
 
     public final static String
             ID_KEY = "id",
-            LOGIN_KEY = "login",
+            USERNAME_KEY = "username",
             PASSWORD_KEY = "password",
             HASH_KEY = "hash",
             ACCESS_KEY = "access",
@@ -40,7 +40,7 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             TENANT_KEY = "tenant";
 
     public final static String
-            CONNEXION = "connexion.php",
+            LOGIN = "login.php",
             GET_MAIN_RENTS = "getMainRents.php",
             GET_RENT_INFO = "getRentInfo.php",
             ADD_BOOKING = "addBooking.php",

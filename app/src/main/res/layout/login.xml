@@ -3,26 +3,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="buthod.tony.rentingmanager.ConnexionActivity">
+    tools:context="buthod.tony.rentingmanager.LoginActivity">
 
     <TextView
-        android:id="@+id/login_label"
+        android:id="@+id/username_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/login"/>
+        android:text="@string/username"/>
 
     <EditText
-        android:id="@+id/login"
+        android:id="@+id/username"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/login_label"/>
+        android:layout_below="@id/username_label"/>
 
     <TextView
         android:id="@+id/password_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/password"
-        android:layout_below="@id/login"/>
+        android:layout_below="@id/username"/>
 
     <EditText
         android:id="@+id/password"
@@ -32,10 +32,10 @@
         android:inputType="textPassword"/>
 
     <Button
-        android:id="@+id/connexion"
+        android:id="@+id/sign_in"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/connexion"
+        android:text="@string/sign_in"
         android:layout_below="@id/password"/>
 
 </RelativeLayout>

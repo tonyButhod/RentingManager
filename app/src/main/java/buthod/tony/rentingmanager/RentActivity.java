@@ -38,7 +38,7 @@ import java.util.Map;
 
 public class RentActivity extends FragmentActivity {
 
-    private String mLogin = null;
+    private String mUsername = null;
     private String mHash = null; // Contain the hash of the password
     private int mAccessLevel = 0; // User access level
     /* 0 : read access for everything, edit only if the user is owner of the rent.
@@ -131,11 +131,11 @@ public class RentActivity extends FragmentActivity {
         t.commit();
         // Send a post request to access information
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
-        mLogin = prefs.getString(SendPostRequest.LOGIN_KEY, null);
+        mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        if (mLogin != null && mHash != null) {
+        if (mUsername != null && mHash != null) {
             SendPostRequest req = new SendPostRequest(SendPostRequest.GET_RENT_INFO);
-            req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin);
+            req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
             req.addPostParam(SendPostRequest.HASH_KEY, mHash);
             req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
             req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
@@ -184,11 +184,11 @@ public class RentActivity extends FragmentActivity {
         JSONArray owners = resObj.getJSONArray(SendPostRequest.OWNERS_KEY);
         for (int i=0; i<owners.length(); i++) {
             JSONObject owner = owners.getJSONObject(i);
-            String ownerLogin = owner.getString(SendPostRequest.LOGIN_KEY);
-            mOwners.add(ownerLogin);
+            String ownerUsername = owner.getString(SendPostRequest.USERNAME_KEY);
+            mOwners.add(ownerUsername);
         }
         // Update the booking right of the user
-        if (mAccessLevel >= 1 || mOwners.contains(mLogin)) {
+        if (mAccessLevel >= 1 || mOwners.contains(mUsername)) {
             mBookingRight = true;
         }
         /* Populate the list of rents */
@@ -373,7 +373,7 @@ public class RentActivity extends FragmentActivity {
         final Date dateRequest = mSelectedDate;
         final int rentId = mBooking.getIdRent(rent);
         SendPostRequest req = new SendPostRequest(SendPostRequest.ADD_BOOKING);
-        req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin);
+        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
         req.addPostParam(SendPostRequest.WEEK_KEY, cal.get(Calendar.WEEK_OF_YEAR));
         req.addPostParam(SendPostRequest.YEAR_KEY, cal.get(Calendar.YEAR));
@@ -478,7 +478,7 @@ public class RentActivity extends FragmentActivity {
         final Date dateRequest = mSelectedDate;
         final int rentId = mBooking.getIdRent(rent);
         SendPostRequest req = new SendPostRequest(SendPostRequest.REMOVE_BOOKING);
-        req.addPostParam(SendPostRequest.LOGIN_KEY, mLogin);
+        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
         req.addPostParam(SendPostRequest.WEEK_KEY, cal.get(Calendar.WEEK_OF_YEAR));
         req.addPostParam(SendPostRequest.YEAR_KEY, cal.get(Calendar.YEAR));
