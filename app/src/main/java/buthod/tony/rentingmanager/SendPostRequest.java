@@ -37,14 +37,17 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             WEEK_KEY = "week",
             YEAR_KEY = "year",
             RENT_KEY = "rent",
-            TENANT_KEY = "tenant";
+            TENANT_KEY = "tenant",
+            WEEKS_KEY = "weeks",
+            PRICES_KEY = "prices";
 
     public final static String
             LOGIN = "login.php",
             GET_MAIN_RENTS = "getMainRents.php",
             GET_RENT_INFO = "getRentInfo.php",
             ADD_BOOKING = "addBooking.php",
-            REMOVE_BOOKING = "removeBooking.php";
+            REMOVE_BOOKING = "removeBooking.php",
+            GET_PRICES = "getPrices.php";
 
 
     private JSONObject mPostDataParams = null;
@@ -88,8 +91,8 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             URL url = new URL(WEBSITE_URL + mScript);
             // Headers
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(5000 /* milliseconds */);
-            conn.setConnectTimeout(5000 /* milliseconds */);
+            conn.setReadTimeout(10000 /* milliseconds */);
+            conn.setConnectTimeout(10000 /* milliseconds */);
             conn.setRequestMethod("POST");
             conn.setDoInput(true);
             conn.setDoOutput(true);

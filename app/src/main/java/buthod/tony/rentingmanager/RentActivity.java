@@ -53,6 +53,7 @@ public class RentActivity extends FragmentActivity {
     private TextView mTenant = null;
     private Button mAddBooking = null;
     private Button mRemoveBooking = null;
+    private Button mPrices = null;
 
     private RentalBooking mBooking = null;
     private String mWholeRent = null;
@@ -68,6 +69,7 @@ public class RentActivity extends FragmentActivity {
         mTenant = (TextView) findViewById(R.id.tenants);
         mAddBooking = (Button) findViewById(R.id.add_booking);
         mRemoveBooking = (Button) findViewById(R.id.remove_booking);
+        mPrices = (Button) findViewById(R.id.prices);
         // Recover the main rent name
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -95,7 +97,7 @@ public class RentActivity extends FragmentActivity {
                 // Do nothing
             }
         });
-        // Add event listener to add and remove a booking
+        // Add event listener to buttons
         mAddBooking.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -106,6 +108,16 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void onClick(View v) {
                 showRemoveBookingDialog();
+            }
+        });
+        mPrices.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getBaseContext(), PricesActivity.class);
+                intent.putExtra(SendPostRequest.RENT_NAME_KEY, mWholeRent);
+                intent.putExtra("editPricesRight",
+                        mAccessLevel >= 2 || mOwners.contains(mUsername));
+                startActivity(intent);
             }
         });
         // Set calendar view

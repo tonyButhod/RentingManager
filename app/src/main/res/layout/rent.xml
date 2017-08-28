@@ -20,27 +20,42 @@
 
     </FrameLayout>
 
-    <Button
-        android:id="@+id/add_booking"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/buttons_layout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/caldroid_container"
-        android:text="Add"/>
+        android:layout_below="@id/caldroid_container">
 
-    <Button
-        android:id="@+id/remove_booking"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/add_booking"
-        android:layout_toRightOf="@id/add_booking"
-        android:layout_below="@id/caldroid_container"
-        android:text="Remove"/>
+        <Button
+            android:id="@+id/add_booking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add"/>
+
+        <Button
+            android:id="@+id/remove_booking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Remove"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/prices"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Prices"/>
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tenants_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/add_booking"
+        android:layout_below="@id/buttons_layout"
         android:text="@string/tenants"/>
 
     <TextView
