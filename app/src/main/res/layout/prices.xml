@@ -19,11 +19,36 @@
 
     </Spinner>
 
+    <LinearLayout
+        android:id="@+id/bottom_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:weightSum="1.0">
+
+        <Button
+            android:id="@+id/cancel_changes"
+            android:layout_width="0dip"
+            android:layout_weight="0.5"
+            android:layout_height="wrap_content"
+            android:text="Cancel Changes"/>
+
+        <Button
+            android:id="@+id/save_changes"
+            android:layout_width="0dip"
+            android:layout_weight="0.5"
+            android:layout_height="wrap_content"
+            android:text="Save Changes"/>
+
+    </LinearLayout>
+
     <ScrollView
         android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/year">
+        android:layout_below="@id/year"
+        android:layout_above="@id/bottom_layout">
 
         <TableLayout
             android:id="@+id/table_prices"

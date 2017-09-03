@@ -39,7 +39,8 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             RENT_KEY = "rent",
             TENANT_KEY = "tenant",
             WEEKS_KEY = "weeks",
-            PRICES_KEY = "prices";
+            PRICES_KEY = "prices",
+            SUBRENT_KEY = "subrent";
 
     public final static String
             LOGIN = "login.php",
@@ -47,7 +48,7 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             GET_RENT_INFO = "getRentInfo.php",
             ADD_BOOKING = "addBooking.php",
             REMOVE_BOOKING = "removeBooking.php",
-            GET_PRICES = "getPrices.php";
+            SET_AND_GET_PRICES = "setAndGetPrices.php";
 
 
     private JSONObject mPostDataParams = null;

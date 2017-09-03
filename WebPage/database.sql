@@ -112,7 +112,8 @@ ALTER TABLE `owner`
 -- Indexes for table `price`
 --
 ALTER TABLE `price`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `week` (`rent`,`week`);
 
 --
 -- Indexes for table `rent`

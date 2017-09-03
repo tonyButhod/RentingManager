@@ -13,4 +13,7 @@
     <string name="addBookingTitle">Add a booking</string>
     <string name="removeBookingTitle">Remove a booking</string>
     <string name="noBookingRight">You haven\'t the right to add or remove a booking</string>
+    <string name="noEditPriceRight">No right for editing prices</string>
+    <string name="changeRentTitle">Do you want to continue ?</string>
+    <string name="changesWillBeLost">Changes might be lost.</string>
 </resources>
