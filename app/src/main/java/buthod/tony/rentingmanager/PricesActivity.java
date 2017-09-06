@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
@@ -14,6 +15,7 @@ import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -35,7 +37,8 @@ import java.util.HashMap;
 import java.util.Locale;
 
 /**
- * Created by Tony on 27/08/2017.
+ * Activity showing prices for a whole rent and its sub-rents.
+ * The user can edit prices.
  */
 
 public class PricesActivity extends Activity {
@@ -148,15 +151,16 @@ public class PricesActivity extends Activity {
                             updateWeekViews();
                         }
                         catch (JSONException e) {
-                            // Go to main activity
+                            // Username or password or rent name is not valid
                             Intent intent = new Intent(getBaseContext(), MainActivity.class);
                             startActivity(intent);
                             finish();
                         }
                     }
                     else {
-                        Toast.makeText(getBaseContext(), "Connexion error : " + result,
-                                Toast.LENGTH_SHORT).show();
+                        // A connection error occurred
+                        Toast.makeText(getBaseContext(), R.string.connectionError,
+                                Toast.LENGTH_LONG).show();
                     }
                 }
             });
@@ -244,6 +248,7 @@ public class PricesActivity extends Activity {
             }
         });
         mSubrentsSpinner.invalidate();
+
         /* Populate the prices table */
         TableRow.LayoutParams params = new TableRow.LayoutParams(
                 TableRow.LayoutParams.WRAP_CONTENT,
@@ -383,8 +388,15 @@ public class PricesActivity extends Activity {
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
         req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
         // Sub-rent to update prices
-        req.addPostParam(SendPostRequest.SUBRENT_KEY,
-                mIdMap.keyAt(mIdMap.indexOfValue(mSubrentsSpinner.getSelectedItem().toString())));
+        String name = mSubrentsSpinner.getSelectedItem().toString();
+        int key = -1;
+        int idMapSize = mIdMap.size();
+        for (int i=0; i<idMapSize; ++i) {
+            // Need to browse manually because SparseArray uses references for comparison.
+            if (mIdMap.valueAt(i).equals(name))
+                key = mIdMap.keyAt(i);
+        }
+        req.addPostParam(SendPostRequest.SUBRENT_KEY, key);
         req.addPostParam(SendPostRequest.PRICES_KEY, mChanges.toString());
         req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
             @Override
@@ -398,23 +410,46 @@ public class PricesActivity extends Activity {
                         parsePrices(result);
                         // Update the table view
                         updatePriceViews();
-                        Toast.makeText(getBaseContext(), "Changes saved", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getBaseContext(), R.string.changeSaved,
+                                Toast.LENGTH_SHORT).show();
                     }
                     catch (JSONException e) {
-                        // Go to main activity
+                        // Go to main activity if an error occurs.
                         Intent intent = new Intent(getBaseContext(), MainActivity.class);
                         startActivity(intent);
                         finish();
                     }
                 }
                 else {
-                    Toast.makeText(getBaseContext(), "Connexion error : " + result,
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
                             Toast.LENGTH_SHORT).show();
                 }
                 // Enable the sub-rents spinner
                 mSubrentsSpinner.setEnabled(true);
+                mRequestRunning = false;
             }
         });
         req.execute();
+    }
+
+    /**
+     * Clear focus of any edit text when the user click next to it.
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            View v = getCurrentFocus();
+            if (v instanceof EditText) {
+                Rect outRect = new Rect();
+                v.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
+                    v.clearFocus();
+                    InputMethodManager imm =
+                            (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event);
     }
 }

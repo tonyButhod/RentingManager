@@ -21,7 +21,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class SendPostRequest extends AsyncTask<String, Void, String> {
     private final static String WEBSITE_URL = "https://website/";
-
+    // Key for post requests
     public final static String
             ID_KEY = "id",
             USERNAME_KEY = "username",
@@ -40,8 +40,9 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             TENANT_KEY = "tenant",
             WEEKS_KEY = "weeks",
             PRICES_KEY = "prices",
-            SUBRENT_KEY = "subrent";
-
+            SUBRENT_KEY = "subrent",
+            MIN_DATE_KEY = "minDate";
+    // Web pages
     public final static String
             LOGIN = "login.php",
             GET_MAIN_RENTS = "getMainRents.php",
@@ -49,7 +50,12 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             ADD_BOOKING = "addBooking.php",
             REMOVE_BOOKING = "removeBooking.php",
             SET_AND_GET_PRICES = "setAndGetPrices.php";
-
+    // Connection results
+    public final static String
+            CONNEXION_ERROR = "Connexion error",
+            ACTION_OK = "OK",
+            RENT_NOT_FREE = "Rent not free",
+            BOOKING_NOT_EXIST = "Booking doesn't exist";
 
     private JSONObject mPostDataParams = null;
     private String mScript = null;
@@ -87,11 +93,13 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
     }
 
     protected String doInBackground(String... arg0) {
+        HttpURLConnection conn = null;
+        String outputString = "";
         try{
 
             URL url = new URL(WEBSITE_URL + mScript);
             // Headers
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
             conn.setReadTimeout(10000 /* milliseconds */);
             conn.setConnectTimeout(10000 /* milliseconds */);
             conn.setRequestMethod("POST");
@@ -123,11 +131,16 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
                 sb.append(String.valueOf(responseCode));
             }
             conn.disconnect();
-            return sb.toString();
+            outputString = sb.toString();
         }
         catch(Exception e){
-            return e.getMessage();
+            outputString = CONNEXION_ERROR;
         }
+        finally {
+            if (conn != null)
+                conn.disconnect();
+        }
+        return outputString;
     }
 
     @Override

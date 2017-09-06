@@ -32,8 +32,8 @@ $rowsDeleted = $req->rowCount();
 $req->closeCursor();
 
 if ($success && $rowsDeleted > 0)
-  echo "true";
+  echo "OK";
 else
-  echo "Booking doesn't exists";
+  echo "Booking doesn't exist";
 
 ?>

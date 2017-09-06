@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -25,6 +28,7 @@ public class LoginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
+
         // Initialize fields
         mUsername = (EditText) findViewById(R.id.username);
         mPassword = (EditText) findViewById(R.id.password);
@@ -65,7 +69,7 @@ public class LoginActivity extends Activity {
                 String hash = resObj.getString(SendPostRequest.HASH_KEY);
                 editor.putString(SendPostRequest.USERNAME_KEY, username);
                 editor.putString(SendPostRequest.HASH_KEY, hash);
-                // Need to write data immediately
+                // Need to write data immediately because it is used in the next activity
                 editor.commit();
                 // Start main activity
                 Intent intent = new Intent(getBaseContext(), MainActivity.class);
@@ -73,16 +77,37 @@ public class LoginActivity extends Activity {
                 finish();
             }
             catch (JSONException e) {
-                Toast.makeText(getBaseContext(), "Username or Password invalid",
+                Toast.makeText(getBaseContext(), R.string.accessDeniedError,
                         Toast.LENGTH_SHORT).show();
                 mPassword.setText("");
                 mPassword.invalidate();
             }
         }
         else {
-            Toast.makeText(getBaseContext(), "Connexion error : " + result,
+            Toast.makeText(getBaseContext(), R.string.connectionError,
                     Toast.LENGTH_SHORT).show();
         }
         mPostRunning = false;
+    }
+
+    /**
+     * Clear focus of any edit text when the user click next to it.
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            View v = getCurrentFocus();
+            if (v instanceof EditText) {
+                Rect outRect = new Rect();
+                v.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
+                    v.clearFocus();
+                    InputMethodManager imm =
+                            (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event);
     }
 }

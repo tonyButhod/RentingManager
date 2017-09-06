@@ -25,15 +25,18 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Created by Tony on 15/08/2017.
+ * Activity showing booking made on a whole rent and its sub-rents.
+ * Show the results in a Calendar.
  */
 
 public class RentActivity extends FragmentActivity {
@@ -58,6 +61,7 @@ public class RentActivity extends FragmentActivity {
     private RentalBooking mBooking = null;
     private String mWholeRent = null;
     private Date mSelectedDate = null;
+    private Date mMinDate = null;
 
 
     @Override
@@ -128,6 +132,11 @@ public class RentActivity extends FragmentActivity {
         args.putInt(CaldroidFragment.YEAR, cal.get(Calendar.YEAR));
         args.putInt(CaldroidFragment.START_DAY_OF_WEEK, CaldroidFragment.MONDAY);
         mCaldroidFragment.setArguments(args);
+        // Set the minimum date as 3 months before the current date.
+        // This limits the data sent during the request.
+        cal.add(Calendar.MONTH, -3);
+        mMinDate = cal.getTime();
+        mCaldroidFragment.setMinDate(mMinDate);
         // Set caldroid listener
         mCaldroidFragment.setCaldroidListener(new CaldroidListener() {
             @Override
@@ -150,6 +159,9 @@ public class RentActivity extends FragmentActivity {
             req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
             req.addPostParam(SendPostRequest.HASH_KEY, mHash);
             req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
+            // Add a minimum date to limit the flow of data.
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            req.addPostParam(SendPostRequest.MIN_DATE_KEY, format.format(mMinDate));
             req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
                 @Override
                 public void postExecute(boolean success, String result) {
@@ -161,15 +173,16 @@ public class RentActivity extends FragmentActivity {
                             updateCaldroidView();
                         }
                         catch (JSONException e) {
-                            // Go to main activity
+                            // Invalid username or password or rent name.
                             Intent intent = new Intent(getBaseContext(), MainActivity.class);
                             startActivity(intent);
                             finish();
                         }
                     }
                     else {
-                        Toast.makeText(getBaseContext(), "Connexion error : " + result,
-                                Toast.LENGTH_SHORT).show();
+                        // A connection error occurred
+                        Toast.makeText(getBaseContext(), R.string.connectionError,
+                                Toast.LENGTH_LONG).show();
                     }
                 }
             });
@@ -395,20 +408,25 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void postExecute(boolean success, String result) {
                 if (success) {
-                    if (result.equals("true")) {
-                        Toast.makeText(getBaseContext(), "New booking added",
+                    if (result.equals(SendPostRequest.ACTION_OK)) {
+                        Toast.makeText(getBaseContext(), R.string.newBooking,
                                 Toast.LENGTH_SHORT).show();
                         mBooking.addBooking(rentId, dateRequest, tenant);
                         updateCaldroidView();
                     }
+                    else if (result.equals(SendPostRequest.RENT_NOT_FREE)){
+                        Toast.makeText(getBaseContext(), R.string.rentNotFreeError,
+                                Toast.LENGTH_SHORT).show();
+                    }
                     else {
-                        Toast.makeText(getBaseContext(), "No booking added : "+result,
+                        Toast.makeText(getBaseContext(), R.string.internalError,
                                 Toast.LENGTH_SHORT).show();
                     }
                 }
                 else {
-                    Toast.makeText(getBaseContext(), "Connexion error : " + result,
-                            Toast.LENGTH_SHORT).show();
+                    // A connection error occurred
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
+                            Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -499,19 +517,24 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void postExecute(boolean success, String result) {
                 if (success) {
-                    if (result.equals("true")) {
-                        Toast.makeText(getBaseContext(), "Booking removed",
+                    if (result.equals(SendPostRequest.ACTION_OK)) {
+                        Toast.makeText(getBaseContext(), R.string.bookingRemoved,
                                 Toast.LENGTH_SHORT).show();
                         mBooking.removeBooking(rentId, dateRequest);
                         updateCaldroidView();
                     }
+                    else if (result.equals(SendPostRequest.BOOKING_NOT_EXIST)) {
+                        Toast.makeText(getBaseContext(), R.string.bookingNotExistError,
+                                Toast.LENGTH_SHORT).show();
+                    }
                     else {
-                        Toast.makeText(getBaseContext(), "No booking removed : "+result,
+                        Toast.makeText(getBaseContext(), R.string.internalError,
                                 Toast.LENGTH_SHORT).show();
                     }
                 }
                 else {
-                    Toast.makeText(getBaseContext(), "Connexion error : " + result,
+                    // A connection error occurred
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
                             Toast.LENGTH_SHORT).show();
                 }
             }

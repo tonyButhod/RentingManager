@@ -31,9 +31,22 @@ if ($idRent == -1) {
 }
 
 // Recover information concerning booking
-$req = $bdd->prepare('SELECT * FROM booking
-                      WHERE rent IN ('.join(",",$subrents_id).');');
-$req->execute();
+$req = null;
+if (isset($_POST['minDate'])) {
+  // Select booking after a minimum date to limit the flow of data
+  $minDate = new DateTime($_POST['minDate']);
+  $req = $bdd->prepare('SELECT * FROM booking
+                        WHERE rent IN ('.join(",",$subrents_id).')
+                        AND ((week >= :minWeek AND year = :minYear)
+                            OR year > :minYear);');
+  $req->execute(array('minWeek' => $minDate->format("W"),
+                      'minYear' => $minDate->format("Y")));
+}
+else {
+  $req = $bdd->prepare('SELECT * FROM booking
+                        WHERE rent IN ('.join(",",$subrents_id).');');
+  $req->execute();
+}
 $booking = [];
 while ($res = $req->fetch()) {
   $booking[] = array('rent' => $res['rent'],

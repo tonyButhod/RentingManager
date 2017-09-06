@@ -27,6 +27,7 @@ if ($result) {
 }
 else {
   // The given rent id is unknown
+  echo "Rent id unknown";
   exit();
 }
 
@@ -81,7 +82,7 @@ $req->closeCursor();
 // So if a booking already exists for a rent at the given date,
 // no row is inserted and execute() return false (true otherwise).
 if ($success && $rowsInserted == 1)
-  echo "true";
+  echo "OK";
 else
   echo "Rent not free";
 

@@ -3,7 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="buthod.tony.rentingmanager.LoginActivity">
+    tools:context="buthod.tony.rentingmanager.LoginActivity"
+    android:descendantFocusability="beforeDescendants"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+    <!-- Set focusability to prevent undesirable focus on edit text -->
 
     <TextView
         android:id="@+id/username_label"

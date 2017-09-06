@@ -54,15 +54,16 @@ public class MainActivity extends Activity {
                             parseResult(result);
                         }
                         catch (JSONException e) {
-                            // Go to connection activity
+                            // Username and password in preferences are not valid.
                             Intent intent = new Intent(getBaseContext(), LoginActivity.class);
                             startActivity(intent);
                             finish();
                         }
                     }
                     else {
-                        Toast.makeText(getBaseContext(), "Connection error : " + result,
-                                Toast.LENGTH_SHORT).show();
+                        // A connection error occurred
+                        Toast.makeText(getBaseContext(), R.string.connectionError,
+                                Toast.LENGTH_LONG).show();
                     }
                 }
             });
