@@ -52,6 +52,7 @@ CREATE TABLE `price` (
   `id` int(11) NOT NULL,
   `rent` int(11) NOT NULL,
   `week` int(11) NOT NULL,
+  `year` int(11) NOT NULL,
   `price` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -113,7 +114,7 @@ ALTER TABLE `owner`
 --
 ALTER TABLE `price`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `week` (`rent`,`week`);
+  ADD UNIQUE KEY `week` (`rent`,`week`,`year`);
 
 --
 -- Indexes for table `rent`

@@ -20,9 +20,10 @@
     <string name="bookingRemoved">Booking removed</string>
     <!-- Prices activity -->
     <string name="noEditPriceRight">No right for editing prices</string>
-    <string name="changeRentTitle">Do you want to continue ?</string>
+    <string name="changeSpinnerTitle">Do you want to continue ?</string>
     <string name="changesWillBeLost">Changes might be lost.</string>
     <string name="changeSaved">Changes have been saved</string>
+    <string name="copyPrices">Copy previous prices</string>
     <!-- Errors -->
     <string name="connectionError">Connection error: check your internet connection.</string>
     <string name="rentNotFreeError">Error: Rent not free this week.</string>

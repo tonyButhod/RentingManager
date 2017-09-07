@@ -10,7 +10,7 @@ if (!isset($_POST['name'])) {
   $_POST['prices'] contains a set of keys/values in braces.
   Each key/value is seperated by ', ' and  each key is seperated by '=' from its value. 
   $_POST['subrent'] contains the rent to set prices. */
-if (isset($_POST['prices']) && isset($_POST['subrent'])) {
+if (isset($_POST['prices']) && isset($_POST['subrent']) && isset($_POST['year'])) {
   /* Check if the user has the right to modify prices */
   $req = $bdd->prepare('SELECT DISTINCT o.user FROM owner o, subrent s, rent r
                         WHERE r.name = :name AND (
@@ -30,7 +30,8 @@ if (isset($_POST['prices']) && isset($_POST['subrent'])) {
   
   /* Insert, update or remove prices */
   $values_str = '';
-  $values_array = array('rent' => $_POST['subrent']);
+  $values_array = array('rent' => $_POST['subrent'], 
+                        'year' => $_POST['year']);
   $week_to_remove = [];
   $i = 0;
   // Remove braces
@@ -39,7 +40,7 @@ if (isset($_POST['prices']) && isset($_POST['subrent'])) {
   foreach (explode(', ', $prices_str) as $week_price) {
     [$week, $price] = explode('=', $week_price);
     if ($price >= 0) {
-      $values_str .= '(:rent, :week'.$i.', :price'.$i.'),';
+      $values_str .= '(:rent, :year, :week'.$i.', :price'.$i.'),';
       $values_array['week'.$i] = $week;
       $values_array['price'.$i] = $price;
       $i += 1;
@@ -53,7 +54,7 @@ if (isset($_POST['prices']) && isset($_POST['subrent'])) {
     // Remove the last coma 
     $values_str = substr($values_str, 0, -1);
     // Insert or update prices
-    $req = $bdd->prepare('INSERT INTO price (rent, week, price)
+    $req = $bdd->prepare('INSERT INTO price (rent, year, week, price)
                           VALUES '.$values_str.'
                           ON DUPLICATE KEY UPDATE price=VALUES(price);');
     $req->execute($values_array);
@@ -79,14 +80,10 @@ $req = $bdd->prepare('SELECT * FROM rent
 $req->execute(array('name' => $_POST['name']));
 $subrents_id = [];
 $subrents_names = [];
-$subrents_weeks = [];
-$subrents_prices = [];
 $idRent = -1;
 while ($rent = $req->fetch()) {
   $subrents_id[] = $rent['id'];
   $subrents_names[] = $rent['name'];
-  $subrents_weeks[$rent['id']] = [];
-  $subrents_prices[$rent['id']] = [];
   if ($_POST['name'] == $rent['name'])
     $idRent = $rent['id'];
 }
@@ -97,27 +94,46 @@ if ($idRent == -1) {
   exit();
 }
 
+// Select prices for the following years
+$curr_year = date("Y");
+$selected_years = [$curr_year-1, $curr_year, $curr_year+1];
+
+$prices = [];
+// Organize prices in rent
+foreach ($subrents_id as $id) {
+  $prices[$id] = [];
+  // Organize prices in year
+  foreach ($selected_years as $year) {
+    $prices[$id][$year] = [];
+  }
+}
+
 // Recover information concerning prices
 $req = $bdd->prepare('SELECT * FROM price
-                      WHERE rent IN ('.join(",",$subrents_id).');');
+                      WHERE rent IN ('.join(",",$subrents_id).')
+                      AND year IN ('.join(",",$selected_years).')
+                      ORDER BY year DESC;');
 $req->execute();
 while ($res = $req->fetch()) {
-  $subrents_weeks[$res['rent']][] = $res['week'];
-  $subrents_prices[$res['rent']][] = $res['price'];
+  $year = $res['year'];
+  $rent_id = $res['rent'];
+  $week = $res['week'];
+  $price = $res['price'];
+  $prices[$rent_id][$year][] = array($week => $price);
 }
 $req->closeCursor();
 
-$prices = [];
+$subrents = [];
 for ($i = 0; $i < count($subrents_id); $i++) {
   $rent_id = $subrents_id[$i];
   $rent_name = $subrents_names[$i];
-  $prices[] = array('id' => $rent_id,
-                    'name' => $rent_name,
-                    'weeks' => $subrents_weeks[$rent_id],
-                    'prices' => $subrents_prices[$rent_id]);
+  $year = $subrents_years[$rent_id];
+  $subrents[] = array('id' => $rent_id,
+                      'name' => $rent_name,
+                      'prices' => $prices[$rent_id]);
 }
   
 echo json_encode(array('username' => $user['username'],
                        'hash' => $user['password'],
-                       'prices' => $prices));
+                       'subrents' => $subrents));
 ?>

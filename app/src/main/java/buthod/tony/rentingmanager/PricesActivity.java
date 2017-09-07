@@ -35,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Activity showing prices for a whole rent and its sub-rents.
@@ -56,10 +57,14 @@ public class PricesActivity extends Activity {
     private TextView[] mWeekViews = null;
     private EditText[] mPriceViews = null;
     private LinearLayout mBottomLayout = null;
+    private Button mCopyPrices = null;
     private Button mSaveChangesButton = null;
     private Button mCancelChangesButton = null;
 
-    private HashMap<String, HashMap<Integer, Integer>> mPrices = new HashMap<>();
+    /* First key corresponds to sub-rent name. Second key is the year.
+        The last one is the week number, and finally the price is obtained.
+     */
+    private HashMap<String, HashMap<Integer, HashMap<Integer, Integer>>> mPrices = new HashMap<>();
     private SparseArray<String> mIdMap = new SparseArray<>();
     /* Contains the changes made on prices
     If the user remove a price, it contains the value -1.
@@ -77,6 +82,7 @@ public class PricesActivity extends Activity {
         mSubrentsSpinner = (Spinner) findViewById(R.id.list_subrents);
         mYearSpinner = (Spinner) findViewById(R.id.year);
         mTablePrices = (TableLayout) findViewById(R.id.table_prices);
+        mCopyPrices = (Button) findViewById(R.id.copy_prices);
         mSaveChangesButton = (Button) findViewById(R.id.save_changes);
         mCancelChangesButton = (Button) findViewById(R.id.cancel_changes);
         mBottomLayout = (LinearLayout) findViewById(R.id.bottom_layout);
@@ -95,26 +101,35 @@ public class PricesActivity extends Activity {
             finish();
             return;
         }
-        // Populate the year spinner with the current year and the next year
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
-                android.R.layout.simple_spinner_item);
-        Calendar cal = Calendar.getInstance();
-        int currYear = cal.get(Calendar.YEAR);
-        adapter.add(String.valueOf(currYear));
-        adapter.add(String.valueOf(currYear+1));
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mYearSpinner.setAdapter(adapter);
-        mYearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        // Add action to buttons
+        mCopyPrices.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateWeekViews();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            public void onClick(View v) {
+                if (mChanges.size() > 0) {
+                    // Initialize an alert dialog
+                    AlertDialog.Builder alert = new AlertDialog.Builder(PricesActivity.this);
+                    alert.setTitle(R.string.changeSpinnerTitle);
+                    alert.setMessage(R.string.changesWillBeLost);
+                    // Set up the buttons
+                    alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            copyPricesPreviousYear();
+                        }
+                    });
+                    alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+                    alert.create().show();
+                }
+                else {
+                    copyPricesPreviousYear();
+                }
             }
         });
-        // Add action to buttons
         mCancelChangesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -177,19 +192,27 @@ public class PricesActivity extends Activity {
     private void parsePrices(String result) throws JSONException {
         JSONObject resObj = new JSONObject(result);
 
-        JSONArray pricesSubrents = resObj.getJSONArray(SendPostRequest.PRICES_KEY);
-        for (int i = 0; i < pricesSubrents.length(); i++) {
-            JSONObject pricesSubrent = pricesSubrents.getJSONObject(i);
-            String rentName = pricesSubrent.getString(SendPostRequest.RENT_NAME_KEY);
-            int rentId = pricesSubrent.getInt(SendPostRequest.ID_KEY);
+        JSONArray subrents = resObj.getJSONArray(SendPostRequest.SUBRENTS_KEY);
+        for (int i = 0; i < subrents.length(); i++) {
+            // Browse the sub-rents
+            JSONObject subrent = subrents.getJSONObject(i);
+            String rentName = subrent.getString(SendPostRequest.RENT_NAME_KEY);
+            int rentId = subrent.getInt(SendPostRequest.ID_KEY);
             mIdMap.put(rentId, rentName);
-            HashMap<Integer, Integer> pricesSubrentHash = new HashMap<Integer, Integer>();
-            JSONArray prices = pricesSubrent.getJSONArray(SendPostRequest.PRICES_KEY);
-            JSONArray weeks = pricesSubrent.getJSONArray(SendPostRequest.WEEKS_KEY);
-            for (int j = 0; j < prices.length(); j++) {
-                int price = prices.getInt(j);
-                int week = weeks.getInt(j);
-                pricesSubrentHash.put(week, price);
+            HashMap<Integer, HashMap<Integer, Integer>> pricesSubrentHash = new HashMap<>();
+            JSONObject prices = subrent.getJSONObject(SendPostRequest.PRICES_KEY);
+            JSONArray years = prices.names();
+            for (int j = 0; j < years.length(); j++) {
+                // Browse the years
+                int year = years.getInt(j);
+                pricesSubrentHash.put(year, new HashMap<Integer, Integer>());
+                JSONArray yearPrices = prices.getJSONArray(years.getString(j));
+                for (int k = 0; k < yearPrices.length(); k++) {
+                    JSONObject weekPrice = yearPrices.getJSONObject(k);
+                    int week = weekPrice.names().getInt(0);
+                    int price = weekPrice.getInt(weekPrice.names().getString(0));
+                    pricesSubrentHash.get(year).put(week, price);
+                }
             }
             mPrices.put(rentName, pricesSubrentHash);
         }
@@ -201,21 +224,22 @@ public class PricesActivity extends Activity {
      */
     private void populateView() {
         /* Populate the list of rents */
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
+        ArrayAdapter<CharSequence> adapterSubrents = new ArrayAdapter<CharSequence>(this,
                 android.R.layout.simple_spinner_item);
         // Iterate on mIdMap to keep the same rent order
         for (int i=0; i<mIdMap.size(); i++) {
-            adapter.add(mIdMap.valueAt(i));
+            adapterSubrents.add(mIdMap.valueAt(i));
         }
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mSubrentsSpinner.setAdapter(adapter);
+        adapterSubrents.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSubrentsSpinner.setAdapter(adapterSubrents);
+        // Warn the user that changes might be lost if he change the selected rent
         mSubrentsSpinner.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN && mChanges.size() > 0) {
                     // Initialize an alert dialog
                     AlertDialog.Builder alert = new AlertDialog.Builder(PricesActivity.this);
-                    alert.setTitle(R.string.changeRentTitle);
+                    alert.setTitle(R.string.changeSpinnerTitle);
                     alert.setMessage(R.string.changesWillBeLost);
                     // Set up the buttons
                     alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
@@ -248,6 +272,61 @@ public class PricesActivity extends Activity {
             }
         });
         mSubrentsSpinner.invalidate();
+
+        /* Populate the list of year */
+        ArrayAdapter<CharSequence> adapterYears = new ArrayAdapter<CharSequence>(this,
+                android.R.layout.simple_spinner_item);
+        Set<Integer> years = mPrices.get(mIdMap.valueAt(0)).keySet();
+        for (Integer year : years)
+            adapterYears.add(String.valueOf(year));
+        adapterYears.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mYearSpinner.setAdapter(adapterYears);
+        // Warn the user that changes might be lost if he change the selected year
+        mYearSpinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN && mChanges.size() > 0) {
+                    // Initialize an alert dialog
+                    AlertDialog.Builder alert = new AlertDialog.Builder(PricesActivity.this);
+                    alert.setTitle(R.string.changeSpinnerTitle);
+                    alert.setMessage(R.string.changesWillBeLost);
+                    // Set up the buttons
+                    alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mYearSpinner.performClick();
+                        }
+                    });
+                    alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+                    alert.create().show();
+                    return true;
+                }
+                return false;
+            }
+        });
+        // Update weeks and prices views when the selected year changes
+        mYearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mChanges.clear();
+                updateWeekViews();
+                updatePriceViews();
+                // Unable copy prices button if the selected year is the last one
+                if (position == mYearSpinner.getAdapter().getCount()-1)
+                    mCopyPrices.setEnabled(false);
+                else
+                    mCopyPrices.setEnabled(true);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
 
         /* Populate the prices table */
         TableRow.LayoutParams params = new TableRow.LayoutParams(
@@ -298,7 +377,8 @@ public class PricesActivity extends Activity {
                 @Override
                 public void afterTextChanged(Editable s) {
                     String rent = mSubrentsSpinner.getSelectedItem().toString();
-                    Integer oldPrice = mPrices.get(rent).get(mWeek);
+                    int year = Integer.valueOf(mYearSpinner.getSelectedItem().toString());
+                    Integer oldPrice = mPrices.get(rent).get(year).get(mWeek);
                     String newString = s.toString();
                     if (newString.isEmpty()) {
                         if (oldPrice == null)
@@ -361,14 +441,40 @@ public class PricesActivity extends Activity {
         if (mPriceViews == null) {
             return;
         }
-        HashMap<Integer, Integer> prices =
-                mPrices.get(mSubrentsSpinner.getSelectedItem().toString());
+        int selectedYear = Integer.valueOf(mYearSpinner.getSelectedItem().toString());
+        String selectedRent = mSubrentsSpinner.getSelectedItem().toString();
+        HashMap<Integer, Integer> prices = mPrices.get(selectedRent).get(selectedYear);
         for (int week=1; week<=NB_WEEK; week++) {
             // Update prices
             TextView priceView = mPriceViews[week-1];
             Integer price = prices.get(week);
             priceView.setText((price!=null) ? String.valueOf(price) : "");
             priceView.invalidate();
+        }
+    }
+
+    /**
+     * Copy prices from the previous year to mChanges if the previous year is defined.
+     * mChanges is cleared before the copy.
+     */
+    private void copyPricesPreviousYear() {
+        String selectedRent = mSubrentsSpinner.getSelectedItem().toString();
+        int selectedYear = Integer.valueOf(mYearSpinner.getSelectedItem().toString());
+        HashMap<Integer, Integer> newChanges = mPrices.get(selectedRent).get(selectedYear-1);
+        if (newChanges != null) {
+            mChanges.clear();
+            // First remove all prices set for the selected year
+            for (int week : mPrices.get(selectedRent).get(selectedYear).keySet())
+                mChanges.put(week, -1);
+            // Then add prices of the previous year to mChanges
+            for (int week : newChanges.keySet())
+                mChanges.put(week, newChanges.get(week));
+            // Finally, update prices views
+            for (int week = 1; week <= NB_WEEK; week++) {
+                Integer price = newChanges.get(week);
+                mPriceViews[week-1].setText( price!=null ? String.valueOf(price) : "");
+                mPriceViews[week-1].invalidate();
+            }
         }
     }
 
@@ -397,6 +503,8 @@ public class PricesActivity extends Activity {
                 key = mIdMap.keyAt(i);
         }
         req.addPostParam(SendPostRequest.SUBRENT_KEY, key);
+        String year = mYearSpinner.getSelectedItem().toString();
+        req.addPostParam(SendPostRequest.YEAR_KEY, year);
         req.addPostParam(SendPostRequest.PRICES_KEY, mChanges.toString());
         req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
             @Override
