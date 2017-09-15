@@ -3,6 +3,13 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <!-- Main colors -->
+    <color name="lightBlue">#4F61C5</color>
+    <color name="darkBlue">#202F8F</color>
+    <color name="lightCyan">#DDF0F0</color>
+    <color name="cyan">#77DDDD</color>
+    <color name="darkCyan">#33AAAA</color>
+    <!-- Calendar colors -->
     <color name="full">#FF7777</color>
     <color name="full_disabled">#FFAAAA</color>
     <color name="full_focused">#DD5555</color>

@@ -1,0 +1,40 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">Logis</string>
+    <string name="cancel">Annuler</string>
+    <string name="save">Sauvegarder</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="add">Ajouter</string>
+    <string name="remove">Supprimer</string>
+    <!-- Login activity -->
+    <string name="username">Indentifiant</string>
+    <string name="password">Mot de passe</string>
+    <string name="sign_in">Connexion</string>
+    <!-- Main activity -->
+    <string name="sign_out">Déconnexion</string>
+    <!-- Rent activity -->
+    <string name="tenant">Locataire :</string>
+    <string name="tenants">Locataires :</string>
+    <string name="noRentFree">Location occupée cette semaine</string>
+    <string name="noRentBusy">Aucune réservation à supprimer</string>
+    <string name="noDateSelected">Sélectionnez une semaine sur le calendrier</string>
+    <string name="addBookingTitle">Ajouter une réservation</string>
+    <string name="removeBookingTitle">Supprimer une réservation</string>
+    <string name="noBookingRight">Vous n\'avez pas le droit d\'ajouter ou supprimer une réservation</string>
+    <string name="newBooking">Nouvelle réservation ajoutée</string>
+    <string name="bookingRemoved">Réservation supprimée</string>
+    <string name="prices">Prix</string>
+    <!-- Prices activity -->
+    <string name="noEditPriceRight">Vous n\'avez pas le droit de modifier les prix</string>
+    <string name="changeSpinnerTitle">Voulez-vous continuer ?</string>
+    <string name="changesWillBeLost">Les changements seront perdus.</string>
+    <string name="changeSaved">Les changements ont été sauvegardés</string>
+    <string name="copyPrices">Copier prix précédents</string>
+    <!-- Errors -->
+    <string name="connectionError">Erreur de connexion : Vérifier votre connexion internet.</string>
+    <string name="rentNotFreeError">Errur : Location pas libre cette semaine.</string>
+    <string name="bookingNotExistError">Erreur : La location n\'existe pas.</string>
+    <string name="internalError">Erreur interne</string>
+    <string name="accessDeniedError">Identifiant ou Mot de Passe invalides.</string>
+</resources>

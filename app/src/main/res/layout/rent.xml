@@ -5,16 +5,31 @@
     android:layout_height="match_parent"
     tools:context="buthod.tony.rentingmanager.MainActivity">
 
-    <Spinner
-        android:id="@+id/list_subrents"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:theme="@style/Toolbar">
 
-    </Spinner>
+        <ImageButton
+            android:id="@+id/back_button"
+            style="@style/BackButton"/>
+
+        <Spinner
+            android:id="@+id/list_subrents"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:theme="@style/RentSpinner">
+        </Spinner>
+
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/caldroid_container"
-        android:layout_below="@id/list_subrents"
+        android:layout_below="@id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -30,13 +45,15 @@
             android:id="@+id/add_booking"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add"/>
+            android:text="@string/add"
+            style="@style/CyanButton"/>
 
         <Button
             android:id="@+id/remove_booking"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Remove"/>
+            android:text="@string/remove"
+            style="@style/CyanButton"/>
 
         <View
             android:layout_width="0dp"
@@ -47,7 +64,8 @@
             android:id="@+id/prices"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Prices"/>
+            android:text="@string/prices"
+            style="@style/CyanButton"/>
 
     </LinearLayout>
 
@@ -56,12 +74,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/buttons_layout"
+        android:textColor="@android:color/black"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="5dp"
         android:text="@string/tenants"/>
 
     <TextView
         android:id="@+id/tenants"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tenants_label"/>
+        android:textColor="@color/darkBlue"
+        android:layout_below="@id/tenants_label"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="5dp"/>
 
 </RelativeLayout>

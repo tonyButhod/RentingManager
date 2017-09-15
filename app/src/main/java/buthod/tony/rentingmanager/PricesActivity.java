@@ -5,9 +5,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.InputType;
@@ -20,6 +23,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TableLayout;
@@ -60,6 +64,7 @@ public class PricesActivity extends Activity {
     private Button mCopyPrices = null;
     private Button mSaveChangesButton = null;
     private Button mCancelChangesButton = null;
+    private ImageButton mBackButton = null;
 
     /* First key corresponds to sub-rent name. Second key is the year.
         The last one is the week number, and finally the price is obtained.
@@ -85,6 +90,7 @@ public class PricesActivity extends Activity {
         mCopyPrices = (Button) findViewById(R.id.copy_prices);
         mSaveChangesButton = (Button) findViewById(R.id.save_changes);
         mCancelChangesButton = (Button) findViewById(R.id.cancel_changes);
+        mBackButton = (ImageButton) findViewById(R.id.back_button);
         mBottomLayout = (LinearLayout) findViewById(R.id.bottom_layout);
         // Hide the bottom layout
         mBottomLayout.setVisibility(View.GONE);
@@ -141,6 +147,12 @@ public class PricesActivity extends Activity {
             @Override
             public void onClick(View v) {
                 saveChangesPostRequest();
+            }
+        });
+        mBackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
             }
         });
         // Send a post request to access information
@@ -225,7 +237,7 @@ public class PricesActivity extends Activity {
     private void populateView() {
         /* Populate the list of rents */
         ArrayAdapter<CharSequence> adapterSubrents = new ArrayAdapter<CharSequence>(this,
-                android.R.layout.simple_spinner_item);
+                R.layout.rent_spinner_item);
         // Iterate on mIdMap to keep the same rent order
         for (int i=0; i<mIdMap.size(); i++) {
             adapterSubrents.add(mIdMap.valueAt(i));
@@ -242,13 +254,16 @@ public class PricesActivity extends Activity {
                     alert.setTitle(R.string.changeSpinnerTitle);
                     alert.setMessage(R.string.changesWillBeLost);
                     // Set up the buttons
-                    alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    Resources res = getResources();
+                    alert.setPositiveButton(res.getString(R.string.yes),
+                            new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             mSubrentsSpinner.performClick();
                         }
                     });
-                    alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    alert.setNegativeButton(res.getString(R.string.no),
+                            new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.cancel();
@@ -275,7 +290,7 @@ public class PricesActivity extends Activity {
 
         /* Populate the list of year */
         ArrayAdapter<CharSequence> adapterYears = new ArrayAdapter<CharSequence>(this,
-                android.R.layout.simple_spinner_item);
+                R.layout.year_spinner_item);
         Set<Integer> years = mPrices.get(mIdMap.valueAt(0)).keySet();
         for (Integer year : years)
             adapterYears.add(String.valueOf(year));
@@ -291,13 +306,14 @@ public class PricesActivity extends Activity {
                     alert.setTitle(R.string.changeSpinnerTitle);
                     alert.setMessage(R.string.changesWillBeLost);
                     // Set up the buttons
-                    alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    Resources res = getResources();
+                    alert.setPositiveButton(res.getString(R.string.yes), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             mYearSpinner.performClick();
                         }
                     });
-                    alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    alert.setNegativeButton(res.getString(R.string.no), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.cancel();
@@ -334,20 +350,24 @@ public class PricesActivity extends Activity {
                 TableRow.LayoutParams.WRAP_CONTENT);
         mPriceViews = new EditText[NB_WEEK];
         mWeekViews = new TextView[NB_WEEK];
+        int lightCyanColor = ContextCompat.getColor(getBaseContext(), R.color.lightCyan);
         for (int i=0; i<NB_WEEK; i++) {
             TableRow row = new TableRow(getBaseContext());
             if (i%2 == 0)
-                row.setBackgroundColor(Color.LTGRAY);
+                row.setBackgroundColor(lightCyanColor);
             else
                 row.setBackgroundColor(Color.WHITE);
             TextView weekView = new TextView(getBaseContext());
             EditText priceView = new EditText(getBaseContext());
             mPriceViews[i] = priceView;
             mWeekViews[i] = weekView;
-            weekView.setTextColor(Color.BLACK);
-            weekView.setPadding(15,5,15,5);
-            priceView.setTextColor(Color.BLACK);
-            priceView.setPadding(15,5,15,5);
+            int darkBlueColor = ContextCompat.getColor(getBaseContext(), R.color.darkBlue);
+            weekView.setTextColor(darkBlueColor);
+            weekView.setPadding(20,10,20,10);
+            weekView.setTextSize(20);
+            priceView.setTextColor(darkBlueColor);
+            priceView.setPadding(20,10,20,10);
+            priceView.setTextSize(20);
             priceView.setMinEms(3);
             priceView.setInputType(InputType.TYPE_CLASS_NUMBER);
             // Disable changes if the user has no rights

@@ -9,15 +9,16 @@
         android:id="@+id/toolbar"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimary"
         android:paddingLeft="8dp"
-        android:paddingRight="8dp">
+        android:paddingRight="8dp"
+        android:theme="@style/Toolbar">
 
         <TextView
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=""/>
+            android:text=""
+            android:layout_gravity="center_vertical"/>
 
         <View
             android:layout_width="0dp"
@@ -28,7 +29,8 @@
             android:id="@+id/sign_out"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sign_out"/>
+            android:text="@string/sign_out"
+            style="@style/DarkBlueButton"/>
 
     </LinearLayout>
 
@@ -37,7 +39,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_below="@id/toolbar">
+        android:layout_below="@id/toolbar"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="5dp">
 
     </LinearLayout>
 

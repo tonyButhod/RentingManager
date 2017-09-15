@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -14,6 +15,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,10 +56,12 @@ public class RentActivity extends FragmentActivity {
 
     private Spinner mSpinner = null;
     private CaldroidBookingFragment mCaldroidFragment = null;
+    private FrameLayout mCaldroidContainer = null;
     private TextView mTenant = null;
     private Button mAddBooking = null;
     private Button mRemoveBooking = null;
     private Button mPrices = null;
+    private ImageButton mBackButton = null;
 
     private RentalBooking mBooking = null;
     private String mWholeRent = null;
@@ -74,6 +79,8 @@ public class RentActivity extends FragmentActivity {
         mAddBooking = (Button) findViewById(R.id.add_booking);
         mRemoveBooking = (Button) findViewById(R.id.remove_booking);
         mPrices = (Button) findViewById(R.id.prices);
+        mBackButton = (ImageButton) findViewById(R.id.back_button);
+        mCaldroidContainer = (FrameLayout) findViewById(R.id.caldroid_container);
         // Recover the main rent name
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -124,6 +131,12 @@ public class RentActivity extends FragmentActivity {
                 startActivity(intent);
             }
         });
+        mBackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
         // Set calendar view
         mCaldroidFragment = new CaldroidBookingFragment();
         Bundle args = new Bundle();
@@ -155,6 +168,13 @@ public class RentActivity extends FragmentActivity {
         mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
         if (mUsername != null && mHash != null) {
+            // Hide views in the activity
+            mCaldroidContainer.setVisibility(View.GONE);
+            mAddBooking.setVisibility(View.GONE);
+            mRemoveBooking.setVisibility(View.GONE);
+            mPrices.setVisibility(View.GONE);
+            mSpinner.setVisibility(View.GONE);
+            // Send a post request
             SendPostRequest req = new SendPostRequest(SendPostRequest.GET_RENT_INFO);
             req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
             req.addPostParam(SendPostRequest.HASH_KEY, mHash);
@@ -167,6 +187,12 @@ public class RentActivity extends FragmentActivity {
                 public void postExecute(boolean success, String result) {
                     if (success) {
                         try {
+                            // Show calendar with buttons and spinner
+                            mCaldroidContainer.setVisibility(View.VISIBLE);
+                            mAddBooking.setVisibility(View.VISIBLE);
+                            mRemoveBooking.setVisibility(View.VISIBLE);
+                            mPrices.setVisibility(View.VISIBLE);
+                            mSpinner.setVisibility(View.VISIBLE);
                             // Save result in local variables
                             parseInfo(result);
                             // Update the view with those updated variables
@@ -218,7 +244,7 @@ public class RentActivity extends FragmentActivity {
         }
         /* Populate the list of rents */
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
-                android.R.layout.simple_spinner_item);
+                R.layout.rent_spinner_item);
         JSONArray subrents = resObj.getJSONArray(SendPostRequest.SUBRENTS_KEY);
         for (int i=0; i<subrents.length(); i++) {
             JSONObject subrent = subrents.getJSONObject(i);
@@ -375,7 +401,9 @@ public class RentActivity extends FragmentActivity {
             rentChoice.setSelection(defaultPos);
         }
         // Set up the buttons
-        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        Resources res = getResources();
+        alert.setPositiveButton(res.getString(R.string.add),
+                new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String rent = rentChoice.getSelectedItem().toString();
@@ -383,7 +411,8 @@ public class RentActivity extends FragmentActivity {
                 addBookingPostRequest(rent, tenant);
             }
         });
-        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        alert.setNegativeButton(res.getString(R.string.cancel),
+                new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
@@ -475,8 +504,7 @@ public class RentActivity extends FragmentActivity {
             }
         });
         // Populate the spinner of alert dialog with free rents.
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
-                android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item);
         adapter.addAll(busyRents);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         rentChoice.setAdapter(adapter);
@@ -487,13 +515,16 @@ public class RentActivity extends FragmentActivity {
             rentChoice.setSelection(defaultPos);
         }
         // Set up the buttons
-        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        Resources res = getResources();
+        alert.setPositiveButton(res.getString(R.string.remove),
+                new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 removeBookingPostRequest(rentChoice.getSelectedItem().toString());
             }
         });
-        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        alert.setNegativeButton(res.getString(R.string.cancel) ,
+                new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();

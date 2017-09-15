@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -101,7 +103,8 @@ public class MainActivity extends Activity {
         mTitle.setText(mUsername);
         for (int i=0; i<rents.length(); i++) {
             JSONObject rent = rents.getJSONObject(i);
-            Button button = new Button(getBaseContext());
+            Button button = new Button(
+                    new ContextThemeWrapper(getBaseContext(), R.style.CyanButton));
             button.setText(rent.getString(SendPostRequest.RENT_NAME_KEY));
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -112,10 +115,13 @@ public class MainActivity extends Activity {
                     startActivity(intent);
                 }
             });
+            button.setBackground(ContextCompat.getDrawable(getBaseContext(),
+                    R.drawable.cyan_button));
             // Add the button to the layout
             LayoutParams params = new LayoutParams(
                     LayoutParams.MATCH_PARENT,
                     LayoutParams.WRAP_CONTENT);
+            params.setMargins(5, 5, 5, 5);
             mRentsLayout.addView(button, params);
         }
         mTitle.invalidate();

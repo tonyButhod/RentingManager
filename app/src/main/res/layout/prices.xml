@@ -8,29 +8,48 @@
     android:focusableInTouchMode="true">
     <!-- Set focusability to prevent undesirable focus on edit text -->
 
-    <Spinner
-        android:id="@+id/list_subrents"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:theme="@style/Toolbar">
 
-    </Spinner>
+        <ImageButton
+            android:id="@+id/back_button"
+            style="@style/BackButton"/>
+
+        <Spinner
+            android:id="@+id/list_subrents"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:theme="@style/RentSpinner">
+
+        </Spinner>
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/year_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_below="@id/list_subrents">
+        android:layout_below="@id/toolbar">
         <Button
             android:id="@+id/copy_prices"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/copyPrices" />
+            android:text="@string/copyPrices"
+            style="@style/CyanButton"/>
 
         <Spinner
             android:id="@+id/year"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:theme="@style/YearSpinner">
         </Spinner>
 
     </LinearLayout>
@@ -48,14 +67,16 @@
             android:layout_width="0dip"
             android:layout_weight="0.5"
             android:layout_height="wrap_content"
-            android:text="Cancel Changes"/>
+            android:text="@string/cancel"
+            style="@style/CyanButton"/>
 
         <Button
             android:id="@+id/save_changes"
             android:layout_width="0dip"
             android:layout_weight="0.5"
             android:layout_height="wrap_content"
-            android:text="Save Changes"/>
+            android:text="@string/save"
+            style="@style/CyanButton"/>
 
     </LinearLayout>
 

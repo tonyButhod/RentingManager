@@ -6,6 +6,43 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textSize">18sp</item>
     </style>
 
+    <style name="Toolbar">
+        <item name="android:background">@color/lightBlue</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <style name="CyanButton" parent="Base.Widget.AppCompat.Button">
+        <item name="android:background">@drawable/cyan_button</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/darkBlue</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_margin">5dp</item>
+    </style>
+
+    <style name="DarkBlueButton" parent="Base.Widget.AppCompat.Button">
+        <item name="android:background">@drawable/dark_blue_button</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_margin">5dp</item>
+    </style>
+
+    <style name="BackButton" parent="Base.Widget.AppCompat.Button">
+        <item name="android:background">@drawable/back_button</item>
+        <item name="android:src">@drawable/back_arrow</item>
+        <item name="android:layout_height">45dp</item>
+        <item name="android:layout_width">50dp</item>
+        <item name="android:scaleType">fitXY</item>
+    </style>
+
+    <style name="YearSpinner" parent="Theme.AppCompat.Light">
+        <item name="android:textColor">@color/darkBlue</item>
+    </style>
+
+    <style name="RentSpinner" parent="Theme.AppCompat.Light">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
 </resources>

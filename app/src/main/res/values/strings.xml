@@ -1,6 +1,12 @@
 <resources>
     <!-- General -->
-    <string name="app_name">Logis</string>
+    <string name="app_name">Dwelling</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="add">Add</string>
+    <string name="remove">Remove</string>
     <!-- Login activity -->
     <string name="username">Username</string>
     <string name="password">Password</string>
@@ -18,6 +24,7 @@
     <string name="noBookingRight">You haven\'t the right to add or remove a booking</string>
     <string name="newBooking">New booking added</string>
     <string name="bookingRemoved">Booking removed</string>
+    <string name="prices">Prices</string>
     <!-- Prices activity -->
     <string name="noEditPriceRight">No right for editing prices</string>
     <string name="changeSpinnerTitle">Do you want to continue ?</string>
