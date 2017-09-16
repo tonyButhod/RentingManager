@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,7 +59,7 @@ public class RentActivity extends FragmentActivity {
     private Spinner mSpinner = null;
     private CaldroidBookingFragment mCaldroidFragment = null;
     private FrameLayout mCaldroidContainer = null;
-    private TextView mTenant = null;
+    private TableLayout mTenants = null;
     private Button mAddBooking = null;
     private Button mRemoveBooking = null;
     private Button mPrices = null;
@@ -75,7 +77,7 @@ public class RentActivity extends FragmentActivity {
         super.setContentView(R.layout.rent);
 
         mSpinner = (Spinner) findViewById(R.id.list_subrents);
-        mTenant = (TextView) findViewById(R.id.tenants);
+        mTenants = (TableLayout) findViewById(R.id.tenants);
         mAddBooking = (Button) findViewById(R.id.add_booking);
         mRemoveBooking = (Button) findViewById(R.id.remove_booking);
         mPrices = (Button) findViewById(R.id.prices);
@@ -156,6 +158,14 @@ public class RentActivity extends FragmentActivity {
             public void onSelectDate(Date date, View view) {
                 // Select the whole week and update tenant
                 selectWeekFromDate(date);
+                updateTenantInfo();
+            }
+
+            @Override
+            public void onChangeMonth(int month, int year) {
+                mSelectedDate = null;
+                mCaldroidFragment.clearSelectedDates();
+                mCaldroidFragment.refreshView();
                 updateTenantInfo();
             }
         });
@@ -328,19 +338,20 @@ public class RentActivity extends FragmentActivity {
 
     private void updateTenantInfo() {
         // Update the tenant
+        mTenants.removeAllViews();
         if (mSelectedDate != null) {
             Map<String, String> tenants = mBooking.getTenants(
                     mSpinner.getSelectedItem().toString(), mSelectedDate);
-            String text = "";
+            int darkBlueColor = ContextCompat.getColor(getBaseContext(), R.color.darkBlue);
             for (Map.Entry<String, String> entry : tenants.entrySet()) {
-                text += entry.getKey() + " : " + entry.getValue() + "\n";
+                TextView tenant = new TextView(getBaseContext());
+                tenant.setText("-" + entry.getKey() + " : " + entry.getValue());
+                tenant.setTextColor(darkBlueColor);
+                tenant.setTextSize(18);
+                mTenants.addView(tenant);
             }
-            mTenant.setText(text);
         }
-        else {
-            mTenant.setText("");
-        }
-        mTenant.invalidate();
+        mTenants.invalidate();
     }
 
     private void selectWeekFromDate(Date date) {
@@ -379,15 +390,23 @@ public class RentActivity extends FragmentActivity {
             return;
         }
         // Initialize an alert dialog
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
-        alert.setTitle(R.string.addBookingTitle);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.addBookingTitle);
         // Set the view of the alert dialog
         LayoutInflater inflater = getLayoutInflater();
         View alertView = inflater.inflate(R.layout.add_booking, null);
-        alert.setView(alertView);
+        builder.setView(alertView);
         // Get useful view
         final EditText tenantInput = (EditText) alertView.findViewById(R.id.tenant_edit);
         final Spinner rentChoice = (Spinner) alertView.findViewById(R.id.rent_choice);
+        final TextView dateView = (TextView) alertView.findViewById(R.id.date);
+        final TextView errorView = (TextView) alertView.findViewById(R.id.error);
+        // Set the text of the date view
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(mSelectedDate);
+        cal.add(Calendar.DATE, 6);
+        SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
+        dateView.setText(format.format(mSelectedDate) + " - " + format.format(cal.getTime()));
         // Populate the spinner of alert dialog with free rents.
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
                 android.R.layout.simple_spinner_item);
@@ -402,23 +421,37 @@ public class RentActivity extends FragmentActivity {
         }
         // Set up the buttons
         Resources res = getResources();
-        alert.setPositiveButton(res.getString(R.string.add),
-                new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String rent = rentChoice.getSelectedItem().toString();
-                String tenant = tenantInput.getText().toString();
-                addBookingPostRequest(rent, tenant);
-            }
-        });
-        alert.setNegativeButton(res.getString(R.string.cancel),
+        builder.setNegativeButton(res.getString(R.string.cancel),
                 new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
             }
         });
-        alert.show();
+        builder.setPositiveButton(res.getString(R.string.add), null);
+        final AlertDialog alertDialog = builder.create();
+        alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                Button b = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                b.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        errorView.setText("");
+                        String rent = rentChoice.getSelectedItem().toString();
+                        String tenant = tenantInput.getText().toString();
+                        if (tenant.isEmpty()) {
+                            errorView.setText(R.string.emptyTenant);
+                        }
+                        else {
+                            addBookingPostRequest(rent, tenant);
+                            alertDialog.dismiss();
+                        }
+                    }
+                });
+            }
+        });
+        alertDialog.show();
     }
 
     private void addBookingPostRequest(final String rent, final String tenant) {
@@ -441,7 +474,10 @@ public class RentActivity extends FragmentActivity {
                         Toast.makeText(getBaseContext(), R.string.newBooking,
                                 Toast.LENGTH_SHORT).show();
                         mBooking.addBooking(rentId, dateRequest, tenant);
+                        mSelectedDate = null;
+                        mCaldroidFragment.clearSelectedDates();
                         updateCaldroidView();
+                        updateTenantInfo();
                     }
                     else if (result.equals(SendPostRequest.RENT_NOT_FREE)){
                         Toast.makeText(getBaseContext(), R.string.rentNotFreeError,
@@ -492,6 +528,14 @@ public class RentActivity extends FragmentActivity {
         // Get useful view
         final TextView tenantView = (TextView) alertView.findViewById(R.id.tenant);
         final Spinner rentChoice = (Spinner) alertView.findViewById(R.id.rent_choice);
+        final TextView dateView = (TextView) alertView.findViewById(R.id.date);
+        // Set the text of the date view
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(mSelectedDate);
+        cal.add(Calendar.DATE, 6);
+        SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
+        dateView.setText(format.format(mSelectedDate) + " - " + format.format(cal.getTime()));
+        // Update the tenant depending on the selected sub-rent.
         rentChoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -552,7 +596,10 @@ public class RentActivity extends FragmentActivity {
                         Toast.makeText(getBaseContext(), R.string.bookingRemoved,
                                 Toast.LENGTH_SHORT).show();
                         mBooking.removeBooking(rentId, dateRequest);
+                        mSelectedDate = null;
+                        mCaldroidFragment.clearSelectedDates();
                         updateCaldroidView();
+                        updateTenantInfo();
                     }
                     else if (result.equals(SendPostRequest.BOOKING_NOT_EXIST)) {
                         Toast.makeText(getBaseContext(), R.string.bookingNotExistError,

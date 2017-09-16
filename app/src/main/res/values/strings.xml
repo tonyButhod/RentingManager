@@ -14,8 +14,9 @@
     <!-- Main activity -->
     <string name="sign_out">Sign out</string>
     <!-- Rent activity -->
-    <string name="tenant">Tenant :</string>
-    <string name="tenants">Tenants :</string>
+    <string name="tenant">Tenant:</string>
+    <string name="tenants">Tenants:</string>
+    <string name="rent">Rent:</string>
     <string name="noRentFree">Rent not free this week</string>
     <string name="noRentBusy">No booking to remove</string>
     <string name="noDateSelected">Please select a week on the calendar</string>
@@ -25,6 +26,7 @@
     <string name="newBooking">New booking added</string>
     <string name="bookingRemoved">Booking removed</string>
     <string name="prices">Prices</string>
+    <string name="emptyTenant">Please inform a tenant</string>
     <!-- Prices activity -->
     <string name="noEditPriceRight">No right for editing prices</string>
     <string name="changeSpinnerTitle">Do you want to continue ?</string>

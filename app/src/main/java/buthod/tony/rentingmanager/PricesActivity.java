@@ -53,7 +53,6 @@ public class PricesActivity extends Activity {
     private String mHash = null;
     private String mWholeRent = null;
     private boolean mEditRight = false;
-    private int mCountChanges = 0;
 
     private Spinner mSubrentsSpinner = null;
     private Spinner mYearSpinner = null;
@@ -117,13 +116,16 @@ public class PricesActivity extends Activity {
                     alert.setTitle(R.string.changeSpinnerTitle);
                     alert.setMessage(R.string.changesWillBeLost);
                     // Set up the buttons
-                    alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    Resources res = getResources();
+                    alert.setPositiveButton(res.getString(R.string.yes),
+                            new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             copyPricesPreviousYear();
                         }
                     });
-                    alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    alert.setNegativeButton(res.getString(R.string.no),
+                            new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.cancel();

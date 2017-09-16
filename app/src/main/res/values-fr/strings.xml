@@ -16,6 +16,7 @@
     <!-- Rent activity -->
     <string name="tenant">Locataire :</string>
     <string name="tenants">Locataires :</string>
+    <string name="rent">Location :</string>
     <string name="noRentFree">Location occupée cette semaine</string>
     <string name="noRentBusy">Aucune réservation à supprimer</string>
     <string name="noDateSelected">Sélectionnez une semaine sur le calendrier</string>
@@ -25,6 +26,7 @@
     <string name="newBooking">Nouvelle réservation ajoutée</string>
     <string name="bookingRemoved">Réservation supprimée</string>
     <string name="prices">Prix</string>
+    <string name="emptyTenant">Renseignez un locataire</string>
     <!-- Prices activity -->
     <string name="noEditPriceRight">Vous n\'avez pas le droit de modifier les prix</string>
     <string name="changeSpinnerTitle">Voulez-vous continuer ?</string>
