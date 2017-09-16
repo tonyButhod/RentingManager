@@ -41,7 +41,8 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             WEEKS_KEY = "weeks",
             PRICES_KEY = "prices",
             SUBRENT_KEY = "subrent",
-            MIN_DATE_KEY = "minDate";
+            MIN_DATE_KEY = "minDate",
+            NEW_PASSWORD_KEY = "newPassword";
     // Web pages
     public final static String
             LOGIN = "login.php",
@@ -49,13 +50,16 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             GET_RENT_INFO = "getRentInfo.php",
             ADD_BOOKING = "addBooking.php",
             REMOVE_BOOKING = "removeBooking.php",
-            SET_AND_GET_PRICES = "setAndGetPrices.php";
+            SET_AND_GET_PRICES = "setAndGetPrices.php",
+            CHANGE_PASSWORD = "changePassword.php";
     // Connection results
     public final static String
             CONNEXION_ERROR = "Connexion error",
             ACTION_OK = "OK",
             RENT_NOT_FREE = "Rent not free",
-            BOOKING_NOT_EXIST = "Booking doesn't exist";
+            BOOKING_NOT_EXIST = "Booking doesn't exist",
+            PASSWORD_INCORRECT = "Password incorrect",
+            AT_LEAST_8_CHAR = "At least 8 characters";
 
     private JSONObject mPostDataParams = null;
     private String mScript = null;

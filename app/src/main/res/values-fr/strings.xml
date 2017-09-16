@@ -31,10 +31,19 @@
     <string name="changesWillBeLost">Les changements seront perdus.</string>
     <string name="changeSaved">Les changements ont été sauvegardés</string>
     <string name="copyPrices">Copier prix précédents</string>
+    <!-- Settings activity -->
+    <string name="changePassword">Changer mot de passe</string>
+    <string name="old_password">Ancien mot de passe</string>
+    <string name="new_password">Nouveau mot de passe</string>
+    <string name="confirmation">Confirmation</string>
+    <string name="newPasswordSaved">Nouveau mot de passe sauvegardé</string>
+    <string name="confirmationIncorrect">Confirmation incorrecte</string>
+    <string name="atLeast8Char">Nouveau mot de passe doit contenir au moins 8 caractères</string>
     <!-- Errors -->
     <string name="connectionError">Erreur de connexion : Vérifier votre connexion internet.</string>
-    <string name="rentNotFreeError">Errur : Location pas libre cette semaine.</string>
+    <string name="rentNotFreeError">Erreur : Location pas libre cette semaine.</string>
     <string name="bookingNotExistError">Erreur : La location n\'existe pas.</string>
     <string name="internalError">Erreur interne</string>
     <string name="accessDeniedError">Identifiant ou Mot de Passe invalides.</string>
+    <string name="passwordIncorrect">Mot de passe incorrect</string>
 </resources>

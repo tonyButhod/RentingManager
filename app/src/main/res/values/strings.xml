@@ -31,10 +31,19 @@
     <string name="changesWillBeLost">Changes might be lost.</string>
     <string name="changeSaved">Changes have been saved</string>
     <string name="copyPrices">Copy previous prices</string>
+    <!-- Settings activity -->
+    <string name="changePassword">Change password</string>
+    <string name="old_password">Old password</string>
+    <string name="new_password">New password</string>
+    <string name="confirmation">Confirmation</string>
+    <string name="newPasswordSaved">New password saved</string>
+    <string name="confirmationIncorrect">Confirmation incorrect</string>
+    <string name="atLeast8Char">New password must contain at least 8 characters</string>
     <!-- Errors -->
     <string name="connectionError">Connection error: check your internet connection.</string>
     <string name="rentNotFreeError">Error: Rent not free this week.</string>
     <string name="bookingNotExistError">Error: Booking doesn\'t exist.</string>
     <string name="internalError">Internal error</string>
     <string name="accessDeniedError">Username or Password invalid</string>
+    <string name="passwordIncorrect">Password incorrect</string>
 </resources>

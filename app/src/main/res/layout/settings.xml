@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="buthod.tony.rentingmanager.SettingsActivity">
+
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/Toolbar">
+
+        <ImageButton
+            android:id="@+id/back_button"
+            style="@style/BackButton"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingRight="15dp"
+            android:layout_gravity="center_vertical"
+            android:theme="@style/RentSpinner">
+
+        </TextView>
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/change_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/changePassword"
+        style="@style/CyanButton"
+        android:layout_below="@id/toolbar"/>
+
+</RelativeLayout>

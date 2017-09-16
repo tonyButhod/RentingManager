@@ -11,7 +11,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -24,7 +23,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
 
-    private TextView mTitle = null;
+    private Button mUserButton = null;
     private LinearLayout mRentsLayout = null;
     private Button mSignOut = null;
 
@@ -36,7 +35,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        mTitle = (TextView) findViewById(R.id.title);
+        mUserButton = (Button) findViewById(R.id.user_button);
         mRentsLayout = (LinearLayout) findViewById(R.id.rentsLayout);
         mSignOut = (Button) findViewById(R.id.sign_out);
         // Check preferences to automatic connection
@@ -76,6 +75,15 @@ public class MainActivity extends Activity {
             startActivity(intent);
             finish();
         }
+        // Listener to open settings when the user click on his username
+        mUserButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getBaseContext(), SettingsActivity.class);
+                intent.putExtra(SendPostRequest.USERNAME_KEY, mUsername);
+                startActivity(intent);
+            }
+        });
         // Listener for sign out
         mSignOut.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,7 +108,7 @@ public class MainActivity extends Activity {
         mUsername = resObj.getString(SendPostRequest.USERNAME_KEY);
         mHash = resObj.getString(SendPostRequest.HASH_KEY);
         JSONArray rents = resObj.getJSONArray(SendPostRequest.RENTS_KEY);
-        mTitle.setText(mUsername);
+        mUserButton.setText(mUsername);
         for (int i=0; i<rents.length(); i++) {
             JSONObject rent = rents.getJSONObject(i);
             Button button = new Button(
@@ -124,7 +132,7 @@ public class MainActivity extends Activity {
             params.setMargins(5, 5, 5, 5);
             mRentsLayout.addView(button, params);
         }
-        mTitle.invalidate();
+        mUserButton.invalidate();
         mRentsLayout.invalidate();
     }
 }
