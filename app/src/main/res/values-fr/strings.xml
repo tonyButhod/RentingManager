@@ -7,6 +7,7 @@
     <string name="no">Non</string>
     <string name="add">Ajouter</string>
     <string name="remove">Supprimer</string>
+    <string name="tryAgain">Réessayer</string>
     <!-- Login activity -->
     <string name="username">Indentifiant</string>
     <string name="password">Mot de passe</string>
@@ -42,7 +43,7 @@
     <string name="confirmationIncorrect">Confirmation incorrecte</string>
     <string name="atLeast8Char">Nouveau mot de passe doit contenir au moins 8 caractères</string>
     <!-- Errors -->
-    <string name="connectionError">Erreur de connexion : Vérifier votre connexion internet.</string>
+    <string name="connectionError">Erreur de connexion : Vérifiez votre connexion internet.</string>
     <string name="rentNotFreeError">Erreur : Location pas libre cette semaine.</string>
     <string name="bookingNotExistError">Erreur : La location n\'existe pas.</string>
     <string name="internalError">Erreur interne</string>

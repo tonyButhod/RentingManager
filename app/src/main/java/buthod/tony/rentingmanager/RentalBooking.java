@@ -28,6 +28,12 @@ public class RentalBooking {
         mIdMap = new SparseArray<>();
     }
 
+    public void clear() {
+        mWholeRent = null;
+        mSubrents.clear();
+        mIdMap.clear();
+    }
+
     public void addSubrent(String name, int id) {
         mSubrents.put(name, new HashMap<Date, String>());
         mIdMap.put(id, name);

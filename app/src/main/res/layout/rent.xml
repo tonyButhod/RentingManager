@@ -3,6 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <Button
+        android:id="@+id/post_request"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/CyanButton"
+        android:text="@string/tryAgain"
+        android:visibility="gone"
+        android:layout_centerInParent="true"/>
+
     <LinearLayout
         android:id="@+id/toolbar"
         android:layout_width="fill_parent"

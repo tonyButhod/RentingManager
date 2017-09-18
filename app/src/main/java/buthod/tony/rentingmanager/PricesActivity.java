@@ -64,6 +64,7 @@ public class PricesActivity extends Activity {
     private Button mSaveChangesButton = null;
     private Button mCancelChangesButton = null;
     private ImageButton mBackButton = null;
+    private Button mPostRequest = null;
 
     /* First key corresponds to sub-rent name. Second key is the year.
         The last one is the week number, and finally the price is obtained.
@@ -91,7 +92,11 @@ public class PricesActivity extends Activity {
         mCancelChangesButton = (Button) findViewById(R.id.cancel_changes);
         mBackButton = (ImageButton) findViewById(R.id.back_button);
         mBottomLayout = (LinearLayout) findViewById(R.id.bottom_layout);
-        // Hide the bottom layout
+        mPostRequest = (Button) findViewById(R.id.post_request);
+        // Hide views in the layout, show again once a post request succeeds
+        mSubrentsSpinner.setVisibility(View.GONE);
+        mCopyPrices.setVisibility(View.GONE);
+        mYearSpinner.setVisibility(View.GONE);
         mBottomLayout.setVisibility(View.GONE);
         // Recover the main rent name and the access level
         Bundle extras = getIntent().getExtras();
@@ -157,43 +162,19 @@ public class PricesActivity extends Activity {
                 finish();
             }
         });
+        mPostRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getPricesPostRequest();
+                mPostRequest.setVisibility(View.GONE);
+            }
+        });
         // Send a post request to access information
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
         mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
         if (mUsername != null && mHash != null) {
-            SendPostRequest req = new SendPostRequest(SendPostRequest.SET_AND_GET_PRICES);
-            req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
-            req.addPostParam(SendPostRequest.HASH_KEY, mHash);
-            req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
-            req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
-                @Override
-                public void postExecute(boolean success, String result) {
-                    if (success) {
-                        try {
-                            // Save result in local variables
-                            parsePrices(result);
-                            // Populate the spinner and the table
-                            populateView();
-                            // Update the table view
-                            updatePriceViews();
-                            updateWeekViews();
-                        }
-                        catch (JSONException e) {
-                            // Username or password or rent name is not valid
-                            Intent intent = new Intent(getBaseContext(), MainActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
-                    }
-                    else {
-                        // A connection error occurred
-                        Toast.makeText(getBaseContext(), R.string.connectionError,
-                                Toast.LENGTH_LONG).show();
-                    }
-                }
-            });
-            req.execute();
+            getPricesPostRequest();
         }
         else {
             // Go to main activity
@@ -203,9 +184,50 @@ public class PricesActivity extends Activity {
         }
     }
 
-    private void parsePrices(String result) throws JSONException {
-        JSONObject resObj = new JSONObject(result);
+    private void getPricesPostRequest() {
+        SendPostRequest req = new SendPostRequest(SendPostRequest.SET_AND_GET_PRICES);
+        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
+        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+        req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
+        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+            @Override
+            public void postExecute(boolean success, String result) {
+                if (success) {
+                    try {
+                        // Save result in local variables
+                        parsePrices(result);
+                        // Show views previously hidden
+                        mSubrentsSpinner.setVisibility(View.VISIBLE);
+                        mCopyPrices.setVisibility(View.VISIBLE);
+                        mYearSpinner.setVisibility(View.VISIBLE);
+                        // Populate the spinner and the table
+                        populateView();
+                        // Update the table view
+                        updatePriceViews();
+                        updateWeekViews();
+                    }
+                    catch (JSONException e) {
+                        // Username or password or rent name is not valid
+                        Intent intent = new Intent(getBaseContext(), MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+                else {
+                    // A connection error occurred
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
+                            Toast.LENGTH_LONG).show();
+                    mPostRequest.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        req.execute();
+    }
 
+    private void parsePrices(String result) throws JSONException {
+        mIdMap.clear();
+        mPrices.clear();
+        JSONObject resObj = new JSONObject(result);
         JSONArray subrents = resObj.getJSONArray(SendPostRequest.SUBRENTS_KEY);
         for (int i = 0; i < subrents.length(); i++) {
             // Browse the sub-rents

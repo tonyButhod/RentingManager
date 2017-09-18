@@ -59,11 +59,13 @@ public class RentActivity extends FragmentActivity {
     private Spinner mSpinner = null;
     private CaldroidBookingFragment mCaldroidFragment = null;
     private FrameLayout mCaldroidContainer = null;
+    private TextView mTenantsLabel = null;
     private TableLayout mTenants = null;
     private Button mAddBooking = null;
     private Button mRemoveBooking = null;
     private Button mPrices = null;
     private ImageButton mBackButton = null;
+    private Button mPostRequest = null;
 
     private RentalBooking mBooking = null;
     private String mWholeRent = null;
@@ -76,13 +78,23 @@ public class RentActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         super.setContentView(R.layout.rent);
 
+        mBackButton = (ImageButton) findViewById(R.id.back_button);
         mSpinner = (Spinner) findViewById(R.id.list_subrents);
-        mTenants = (TableLayout) findViewById(R.id.tenants);
+        mCaldroidContainer = (FrameLayout) findViewById(R.id.caldroid_container);
         mAddBooking = (Button) findViewById(R.id.add_booking);
         mRemoveBooking = (Button) findViewById(R.id.remove_booking);
         mPrices = (Button) findViewById(R.id.prices);
-        mBackButton = (ImageButton) findViewById(R.id.back_button);
-        mCaldroidContainer = (FrameLayout) findViewById(R.id.caldroid_container);
+        mTenantsLabel = (TextView) findViewById(R.id.tenants_label);
+        mTenants = (TableLayout) findViewById(R.id.tenants);
+        mPostRequest = (Button) findViewById(R.id.post_request);
+        // Hide views in the activity, show again once a post request succeeds
+        mSpinner.setVisibility(View.GONE);
+        mCaldroidContainer.setVisibility(View.GONE);
+        mAddBooking.setVisibility(View.GONE);
+        mRemoveBooking.setVisibility(View.GONE);
+        mPrices.setVisibility(View.GONE);
+        mTenantsLabel.setVisibility(View.GONE);
+        mTenants.setVisibility(View.GONE);
         // Recover the main rent name
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -139,6 +151,13 @@ public class RentActivity extends FragmentActivity {
                 finish();
             }
         });
+        mPostRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getRentInfoPostRequest();
+                mPostRequest.setVisibility(View.GONE);
+            }
+        });
         // Set calendar view
         mCaldroidFragment = new CaldroidBookingFragment();
         Bundle args = new Bundle();
@@ -178,51 +197,7 @@ public class RentActivity extends FragmentActivity {
         mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
         if (mUsername != null && mHash != null) {
-            // Hide views in the activity
-            mCaldroidContainer.setVisibility(View.GONE);
-            mAddBooking.setVisibility(View.GONE);
-            mRemoveBooking.setVisibility(View.GONE);
-            mPrices.setVisibility(View.GONE);
-            mSpinner.setVisibility(View.GONE);
-            // Send a post request
-            SendPostRequest req = new SendPostRequest(SendPostRequest.GET_RENT_INFO);
-            req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
-            req.addPostParam(SendPostRequest.HASH_KEY, mHash);
-            req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
-            // Add a minimum date to limit the flow of data.
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            req.addPostParam(SendPostRequest.MIN_DATE_KEY, format.format(mMinDate));
-            req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
-                @Override
-                public void postExecute(boolean success, String result) {
-                    if (success) {
-                        try {
-                            // Show calendar with buttons and spinner
-                            mCaldroidContainer.setVisibility(View.VISIBLE);
-                            mAddBooking.setVisibility(View.VISIBLE);
-                            mRemoveBooking.setVisibility(View.VISIBLE);
-                            mPrices.setVisibility(View.VISIBLE);
-                            mSpinner.setVisibility(View.VISIBLE);
-                            // Save result in local variables
-                            parseInfo(result);
-                            // Update the view with those updated variables
-                            updateCaldroidView();
-                        }
-                        catch (JSONException e) {
-                            // Invalid username or password or rent name.
-                            Intent intent = new Intent(getBaseContext(), MainActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
-                    }
-                    else {
-                        // A connection error occurred
-                        Toast.makeText(getBaseContext(), R.string.connectionError,
-                                Toast.LENGTH_LONG).show();
-                    }
-                }
-            });
-            req.execute();
+            getRentInfoPostRequest();
         }
         else {
             // Go to main activity
@@ -232,14 +207,60 @@ public class RentActivity extends FragmentActivity {
         }
     }
 
+    private void getRentInfoPostRequest() {
+        // Send a post request
+        SendPostRequest req = new SendPostRequest(SendPostRequest.GET_RENT_INFO);
+        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
+        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+        req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
+        // Add a minimum date to limit the flow of data.
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        req.addPostParam(SendPostRequest.MIN_DATE_KEY, format.format(mMinDate));
+        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+            @Override
+            public void postExecute(boolean success, String result) {
+                if (success) {
+                    try {
+                        // Save result in local variables
+                        parseInfo(result);
+                        // Show calendar, buttons, spinner and tenants
+                        mSpinner.setVisibility(View.VISIBLE);
+                        mCaldroidContainer.setVisibility(View.VISIBLE);
+                        mAddBooking.setVisibility(View.VISIBLE);
+                        mRemoveBooking.setVisibility(View.VISIBLE);
+                        mPrices.setVisibility(View.VISIBLE);
+                        mTenantsLabel.setVisibility(View.VISIBLE);
+                        mTenants.setVisibility(View.VISIBLE);
+                        // Update the view with those updated variables
+                        updateCaldroidView();
+                    }
+                    catch (JSONException e) {
+                        // Invalid username or password or rent name.
+                        Intent intent = new Intent(getBaseContext(), MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+                else {
+                    // A connection error occurred
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
+                            Toast.LENGTH_LONG).show();
+                    mPostRequest.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        req.execute();
+    }
+
     /**
      * Parse the string "result" to save booking information in variable "mBooking".
      * @param result The string to parse with JSON format.
      * @throws JSONException
      */
     private void parseInfo(String result) throws JSONException {
-        JSONObject resObj = new JSONObject(result);
+        mBooking.clear();
 
+        JSONObject resObj = new JSONObject(result);
         /* Get the access level and owners of the rent */
         mAccessLevel = resObj.getInt(SendPostRequest.ACCESS_KEY);
         JSONArray owners = resObj.getJSONArray(SendPostRequest.OWNERS_KEY);
@@ -251,6 +272,9 @@ public class RentActivity extends FragmentActivity {
         // Update the booking right of the user
         if (mAccessLevel >= 1 || mOwners.contains(mUsername)) {
             mBookingRight = true;
+        }
+        else {
+            mBookingRight = false;
         }
         /* Populate the list of rents */
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,

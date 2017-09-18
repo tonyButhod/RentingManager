@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
     private Button mUserButton = null;
     private LinearLayout mRentsLayout = null;
     private Button mSignOut = null;
+    private Button mPostRequest = null;
 
     private String mUsername = null;
     private String mHash = null; // Contain the hash of the password
@@ -36,39 +37,17 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main);
 
         mUserButton = (Button) findViewById(R.id.user_button);
-        mRentsLayout = (LinearLayout) findViewById(R.id.rentsLayout);
+        mRentsLayout = (LinearLayout) findViewById(R.id.rents_layout);
         mSignOut = (Button) findViewById(R.id.sign_out);
-        // Check preferences to automatic connection
+        mPostRequest = (Button) findViewById(R.id.post_request);
+        // Hide user button at the beginning
+        mUserButton.setVisibility(View.GONE);
+        // Check preferences for automatic connection
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
-        String prefUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
-        String prefHash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        if (prefUsername != null && prefHash != null) {
-            SendPostRequest req = new SendPostRequest(SendPostRequest.GET_MAIN_RENTS);
-            req.addPostParam(SendPostRequest.USERNAME_KEY, prefUsername);
-            req.addPostParam(SendPostRequest.HASH_KEY, prefHash);
-            req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
-                @Override
-                public void postExecute(boolean success, String result) {
-                    if (success) {
-                        // Parse JSON file
-                        try {
-                            parseResult(result);
-                        }
-                        catch (JSONException e) {
-                            // Username and password in preferences are not valid.
-                            Intent intent = new Intent(getBaseContext(), LoginActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
-                    }
-                    else {
-                        // A connection error occurred
-                        Toast.makeText(getBaseContext(), R.string.connectionError,
-                                Toast.LENGTH_LONG).show();
-                    }
-                }
-            });
-            req.execute();
+        mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
+        mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
+        if (mUsername != null && mHash != null) {
+            getMainRentsPostRequest();
         }
         else {
             Intent intent = new Intent(getBaseContext(), LoginActivity.class);
@@ -84,7 +63,7 @@ public class MainActivity extends Activity {
                 startActivity(intent);
             }
         });
-        // Listener for sign out
+        // Listener to sign out
         mSignOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,12 +80,51 @@ public class MainActivity extends Activity {
                 finish();
             }
         });
+        // Listener to send a new post request
+        mPostRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getMainRentsPostRequest();
+                mPostRequest.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void getMainRentsPostRequest() {
+        SendPostRequest req = new SendPostRequest(SendPostRequest.GET_MAIN_RENTS);
+        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
+        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+            @Override
+            public void postExecute(boolean success, String result) {
+                if (success) {
+                    // Parse JSON file
+                    try {
+                        parseResult(result);
+                        // Show the user button to access settings
+                        mUserButton.setVisibility(View.VISIBLE);
+                    }
+                    catch (JSONException e) {
+                        // Username and password in preferences are not valid.
+                        Intent intent = new Intent(getBaseContext(), LoginActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+                else {
+                    // A connection error occurred
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
+                            Toast.LENGTH_LONG).show();
+                    mPostRequest.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        req.execute();
     }
 
     private void parseResult(String result) throws JSONException {
+        mRentsLayout.removeAllViews();
         JSONObject resObj = new JSONObject(result);
-        mUsername = resObj.getString(SendPostRequest.USERNAME_KEY);
-        mHash = resObj.getString(SendPostRequest.HASH_KEY);
         JSONArray rents = resObj.getJSONArray(SendPostRequest.RENTS_KEY);
         mUserButton.setText(mUsername);
         for (int i=0; i<rents.length(); i++) {
