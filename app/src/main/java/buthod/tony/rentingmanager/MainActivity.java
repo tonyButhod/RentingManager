@@ -46,10 +46,7 @@ public class MainActivity extends Activity {
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
         mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        if (mUsername != null && mHash != null) {
-            getMainRentsPostRequest();
-        }
-        else {
+        if (mUsername == null || mHash == null) {
             Intent intent = new Intent(getBaseContext(), LoginActivity.class);
             startActivity(intent);
             finish();
@@ -90,6 +87,12 @@ public class MainActivity extends Activity {
         });
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getMainRentsPostRequest();
+    }
+
     private void getMainRentsPostRequest() {
         SendPostRequest req = new SendPostRequest(SendPostRequest.GET_MAIN_RENTS);
         req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
@@ -122,6 +125,11 @@ public class MainActivity extends Activity {
         req.execute();
     }
 
+    /**
+     * Parse the resulting string of the post request,
+     * and add one button per rent to the linear layout.
+     * @param result The string to parse.
+     */
     private void parseResult(String result) throws JSONException {
         mRentsLayout.removeAllViews();
         JSONObject resObj = new JSONObject(result);

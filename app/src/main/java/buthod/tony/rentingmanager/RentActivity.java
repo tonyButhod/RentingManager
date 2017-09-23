@@ -55,6 +55,7 @@ public class RentActivity extends FragmentActivity {
      */
     private List<String> mOwners = new ArrayList<>();
     private boolean mBookingRight = false;
+    private String mSelectedSubrent = null;
 
     private Spinner mSpinner = null;
     private CaldroidBookingFragment mCaldroidFragment = null;
@@ -113,6 +114,7 @@ public class RentActivity extends FragmentActivity {
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mSelectedSubrent = mSpinner.getItemAtPosition(position).toString();
                 updateCaldroidView();
                 updateTenantInfo();
             }
@@ -196,10 +198,7 @@ public class RentActivity extends FragmentActivity {
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
         mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        if (mUsername != null && mHash != null) {
-            getRentInfoPostRequest();
-        }
-        else {
+        if (mUsername == null || mHash == null) {
             // Go to main activity
             Intent intent = new Intent(getBaseContext(), MainActivity.class);
             startActivity(intent);
@@ -207,6 +206,15 @@ public class RentActivity extends FragmentActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getRentInfoPostRequest();
+    }
+
+    /**
+     * Get all bookings of one whole rent and its sub-rents with a post request.
+     */
     private void getRentInfoPostRequest() {
         // Send a post request
         SendPostRequest req = new SendPostRequest(SendPostRequest.GET_RENT_INFO);
@@ -231,8 +239,9 @@ public class RentActivity extends FragmentActivity {
                         mPrices.setVisibility(View.VISIBLE);
                         mTenantsLabel.setVisibility(View.VISIBLE);
                         mTenants.setVisibility(View.VISIBLE);
-                        // Update the view with those updated variables
+                        // Update views with new variables
                         updateCaldroidView();
+                        updateTenantInfo();
                     }
                     catch (JSONException e) {
                         // Invalid username or password or rent name.
@@ -254,8 +263,8 @@ public class RentActivity extends FragmentActivity {
 
     /**
      * Parse the string "result" to save booking information in variable "mBooking".
+     * Update also the spinner and the booking right.
      * @param result The string to parse with JSON format.
-     * @throws JSONException
      */
     private void parseInfo(String result) throws JSONException {
         mBooking.clear();
@@ -270,19 +279,20 @@ public class RentActivity extends FragmentActivity {
             mOwners.add(ownerUsername);
         }
         // Update the booking right of the user
-        if (mAccessLevel >= 1 || mOwners.contains(mUsername)) {
-            mBookingRight = true;
-        }
-        else {
-            mBookingRight = false;
-        }
+        mBookingRight = mAccessLevel >= 1 || mOwners.contains(mUsername);
+
         /* Populate the list of rents */
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
                 R.layout.rent_spinner_item);
         JSONArray subrents = resObj.getJSONArray(SendPostRequest.SUBRENTS_KEY);
+        // Save the previous selected rent position
+        int previousRentPosition = -1;
         for (int i=0; i<subrents.length(); i++) {
             JSONObject subrent = subrents.getJSONObject(i);
             String name = subrent.getString(SendPostRequest.RENT_NAME_KEY);
+            // If the name corresponds to the previous selected rent, save the position
+            if (mSelectedSubrent != null && mSelectedSubrent.equals(name))
+                previousRentPosition = i;
             int id = subrent.getInt(SendPostRequest.ID_KEY);
             mBooking.addSubrent(name, id);
             adapter.add(name);
@@ -290,7 +300,11 @@ public class RentActivity extends FragmentActivity {
         mBooking.setWholeRent(mWholeRent);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinner.setAdapter(adapter);
+        // Recover the previous selected rent
+        if (previousRentPosition != -1)
+            mSpinner.setSelection(previousRentPosition);
         mSpinner.invalidate();
+        mSelectedSubrent = mSpinner.getSelectedItem().toString();
 
         /* Parse the result for booking */
         Calendar cal = Calendar.getInstance();
@@ -317,19 +331,18 @@ public class RentActivity extends FragmentActivity {
     private void updateCaldroidView() {
         int nb_subrents = mBooking.getNumberSubrent()-1; // Doesn't count the whole rent.
         HashMap<Date, Integer> nbBookingMap = new HashMap<>();
-        String selectedItem = mSpinner.getSelectedItem().toString();
 
         // Check which sub-rent is selected.
         // If the whole rent is selected, all sub-rent are selected
         Iterable<String> subrentSet;
-        if (selectedItem.equals(mWholeRent))
+        if (mSelectedSubrent.equals(mWholeRent))
             // If the whole location is selected, all sub-rents are selected
             subrentSet = mBooking.getSubrentSet();
         else {
+            // Otherwise only the sub-rent and the whole rent are selected
             ArrayList<String> selectedSet = new ArrayList<String>();
-            selectedSet.add(selectedItem);
-            if (!selectedItem.equals(mWholeRent))
-                selectedSet.add(mWholeRent);
+            selectedSet.add(mSelectedSubrent);
+            selectedSet.add(mWholeRent);
             subrentSet = selectedSet;
         }
 
@@ -337,15 +350,17 @@ public class RentActivity extends FragmentActivity {
         mCaldroidFragment.clearBooking();
         for (String subrent : subrentSet) {
             // Iterate on booking per sub-rent
-            if (subrent.equals(selectedItem) || subrent.equals(mWholeRent)) {
+            if (subrent.equals(mSelectedSubrent) || subrent.equals(mWholeRent)) {
+                // The rent is full
                 for (Map.Entry<Date, String> booking : mBooking.getBookingEntrySet(subrent))
                     mCaldroidFragment.setWeekBookingForDate(booking.getKey(),
                             CaldroidBookingFragment.FULL);
             }
             else {
+                // The rent can be full or partially rented depending on whether all sub-rents
+                // are rented or not.
                 for (Map.Entry<Date, String> booking : mBooking.getBookingEntrySet(subrent)) {
-                    // Count the number of sub-rents in order to put fullDraw
-                    // if the whole location is rented.
+                    // Count the number of sub-rents to know if the whole rent is rented.
                     Date date = booking.getKey();
                     Integer nb_booking = nbBookingMap.get(date);
                     int new_nb_booking = ((nb_booking!=null)?nb_booking:0) + 1;
@@ -360,12 +375,13 @@ public class RentActivity extends FragmentActivity {
         mCaldroidFragment.refreshView();
     }
 
+    /**
+     * Show tenants of the selected date in the table layout.
+     */
     private void updateTenantInfo() {
-        // Update the tenant
         mTenants.removeAllViews();
         if (mSelectedDate != null) {
-            Map<String, String> tenants = mBooking.getTenants(
-                    mSpinner.getSelectedItem().toString(), mSelectedDate);
+            Map<String, String> tenants = mBooking.getTenants(mSelectedSubrent, mSelectedDate);
             int darkBlueColor = ContextCompat.getColor(getBaseContext(), R.color.darkBlue);
             for (Map.Entry<String, String> entry : tenants.entrySet()) {
                 TextView tenant = new TextView(getBaseContext());
@@ -438,9 +454,8 @@ public class RentActivity extends FragmentActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         rentChoice.setAdapter(adapter);
         // If the selected rent in the activity is free, set this rent as default in dialog.
-        String selectedRent = mSpinner.getSelectedItem().toString();
-        if (freeRents.contains(selectedRent)) {
-            int defaultPos = adapter.getPosition(selectedRent);
+        if (freeRents.contains(mSelectedSubrent)) {
+            int defaultPos = adapter.getPosition(mSelectedSubrent);
             rentChoice.setSelection(defaultPos);
         }
         // Set up the buttons
@@ -577,9 +592,8 @@ public class RentActivity extends FragmentActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         rentChoice.setAdapter(adapter);
         // If the selected rent in the activity is free, set this rent as default in dialog.
-        String selectedRent = mSpinner.getSelectedItem().toString();
-        if (busyRents.contains(selectedRent)) {
-            int defaultPos = adapter.getPosition(selectedRent);
+        if (busyRents.contains(mSelectedSubrent)) {
+            int defaultPos = adapter.getPosition(mSelectedSubrent);
             rentChoice.setSelection(defaultPos);
         }
         // Set up the buttons

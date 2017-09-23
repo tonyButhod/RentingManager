@@ -12,7 +12,7 @@
         android:id="@+id/post_request"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/CyanButton"
+        style="@style/DarkBlueButton"
         android:text="@string/tryAgain"
         android:visibility="gone"
         android:layout_centerInParent="true"/>

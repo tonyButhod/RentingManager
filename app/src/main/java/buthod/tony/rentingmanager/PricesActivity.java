@@ -53,14 +53,17 @@ public class PricesActivity extends Activity {
     private String mHash = null;
     private String mWholeRent = null;
     private boolean mEditRight = false;
+    private String mSelectedSubrent = null;
+    private String mSelectedYear = null;
 
     private Spinner mSubrentsSpinner = null;
     private Spinner mYearSpinner = null;
     private TableLayout mTablePrices = null;
     private TextView[] mWeekViews = null;
     private EditText[] mPriceViews = null;
-    private LinearLayout mBottomLayout = null;
     private Button mCopyPrices = null;
+    // Layout containing mSaveChangeButton and mCancelChangeButton
+    private LinearLayout mBottomLayout = null;
     private Button mSaveChangesButton = null;
     private Button mCancelChangesButton = null;
     private ImageButton mBackButton = null;
@@ -75,10 +78,75 @@ public class PricesActivity extends Activity {
     If the user remove a price, it contains the value -1.
      */
     private HashMap<Integer, Integer> mChanges = new HashMap<>();
-    /* Indicate if a post request is running. Allow to have only 1 post request. */
-    private boolean mRequestRunning = false;
 
-    @Override
+    /* Listener for spinners */
+    private AdapterView.OnItemSelectedListener mSubrentSpinnerListener =
+            new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id){
+                    mSelectedSubrent = mSubrentsSpinner.getItemAtPosition(position).toString();
+                    mChanges.clear();
+                    mBottomLayout.setVisibility(View.GONE);
+                    updatePriceViews();
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
+            };
+
+    private AdapterView.OnItemSelectedListener mYearSpinnerListener =
+            new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id){
+                    mSelectedYear = mYearSpinner.getItemAtPosition(position).toString();
+                    mChanges.clear();
+                    mBottomLayout.setVisibility(View.GONE);
+                    updateWeekViews();
+                    updatePriceViews();
+                    // Unable copy prices button if the selected year is the last one
+                    if (position == mYearSpinner.getAdapter().getCount() - 1)
+                        mCopyPrices.setEnabled(false);
+                    else
+                        mCopyPrices.setEnabled(true);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
+            };
+
+    private View.OnTouchListener mChangesLostDialog = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(final View v, MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN && mChanges.size() > 0) {
+                // Initialize an alert dialog
+                AlertDialog.Builder alert = new AlertDialog.Builder(PricesActivity.this);
+                alert.setTitle(R.string.changeSpinnerTitle);
+                alert.setMessage(R.string.changesWillBeLost);
+                // Set up the buttons
+                Resources res = getResources();
+                alert.setPositiveButton(res.getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        v.performClick();
+                    }
+                });
+                alert.setNegativeButton(res.getString(R.string.no),
+                        new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                // Show the alert dialog
+                alert.create().show();
+                return true;
+            }
+            return false;
+        }
+    };
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         super.setContentView(R.layout.prices);
@@ -97,6 +165,7 @@ public class PricesActivity extends Activity {
         mSubrentsSpinner.setVisibility(View.GONE);
         mCopyPrices.setVisibility(View.GONE);
         mYearSpinner.setVisibility(View.GONE);
+        mTablePrices.setVisibility(View.GONE);
         mBottomLayout.setVisibility(View.GONE);
         // Recover the main rent name and the access level
         Bundle extras = getIntent().getExtras();
@@ -111,6 +180,14 @@ public class PricesActivity extends Activity {
             finish();
             return;
         }
+        // Warn the user that changes might be lost if he change the selected rent
+        mSubrentsSpinner.setOnTouchListener(mChangesLostDialog);
+        // Clear changes and update price views when the user change of rent
+        mSubrentsSpinner.setOnItemSelectedListener(mSubrentSpinnerListener);
+        // Warn the user that changes might be lost if he change the selected year
+        mYearSpinner.setOnTouchListener(mChangesLostDialog);
+        // Update weeks and prices views when the selected year changes
+        mYearSpinner.setOnItemSelectedListener(mYearSpinnerListener);
         // Add action to buttons
         mCopyPrices.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -147,6 +224,7 @@ public class PricesActivity extends Activity {
             @Override
             public void onClick(View v) {
                 mChanges.clear();
+                mBottomLayout.setVisibility(View.GONE);
                 updatePriceViews();
             }
         });
@@ -169,14 +247,13 @@ public class PricesActivity extends Activity {
                 mPostRequest.setVisibility(View.GONE);
             }
         });
+        // Populate the table of prices by week
+        populatePricesTable();
         // Send a post request to access information
         SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
         mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
         mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
-        if (mUsername != null && mHash != null) {
-            getPricesPostRequest();
-        }
-        else {
+        if (mUsername == null || mHash == null) {
             // Go to main activity
             Intent intent = new Intent(getBaseContext(), MainActivity.class);
             startActivity(intent);
@@ -184,6 +261,15 @@ public class PricesActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getPricesPostRequest();
+    }
+
+    /**
+     * Get prices of the whole rent and its sub-rents with a post request.
+     */
     private void getPricesPostRequest() {
         SendPostRequest req = new SendPostRequest(SendPostRequest.SET_AND_GET_PRICES);
         req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
@@ -200,8 +286,9 @@ public class PricesActivity extends Activity {
                         mSubrentsSpinner.setVisibility(View.VISIBLE);
                         mCopyPrices.setVisibility(View.VISIBLE);
                         mYearSpinner.setVisibility(View.VISIBLE);
-                        // Populate the spinner and the table
-                        populateView();
+                        mTablePrices.setVisibility(View.VISIBLE);
+                        // Populate spinners
+                        populateSpinners();
                         // Update the table view
                         updatePriceViews();
                         updateWeekViews();
@@ -224,9 +311,16 @@ public class PricesActivity extends Activity {
         req.execute();
     }
 
+    /**
+     * Parse the resulting string of the post request.
+     * Update mPrices and mIdMap with new values.
+     * @param result The string to parse.
+     */
     private void parsePrices(String result) throws JSONException {
+        // Clear fields to update
         mIdMap.clear();
         mPrices.clear();
+        // Parse post request result
         JSONObject resObj = new JSONObject(result);
         JSONArray subrents = resObj.getJSONArray(SendPostRequest.SUBRENTS_KEY);
         for (int i = 0; i < subrents.length(); i++) {
@@ -255,136 +349,102 @@ public class PricesActivity extends Activity {
     }
 
     /**
-     * Populate the spinner of sub-rents and
-     * populate the table layout with empty TextView.
+     * Populate sub-rents spinner and years spinner with parsed data.
      */
-    private void populateView() {
+    private void populateSpinners() {
+        /* Disable onItemSelectedListener of spinners */
+        mSubrentsSpinner.setOnItemSelectedListener(null);
+        mYearSpinner.setOnItemSelectedListener(null);
+
         /* Populate the list of rents */
         ArrayAdapter<CharSequence> adapterSubrents = new ArrayAdapter<CharSequence>(this,
                 R.layout.rent_spinner_item);
+        // Save the previous selected rent position if it exists
+        int previousRentPosition = -1;
         // Iterate on mIdMap to keep the same rent order
-        for (int i=0; i<mIdMap.size(); i++) {
-            adapterSubrents.add(mIdMap.valueAt(i));
+        for (int i = 0; i < mIdMap.size(); i++) {
+            String name = mIdMap.valueAt(i);
+            adapterSubrents.add(name);
+            if (mSelectedSubrent != null && mSelectedSubrent.equals(name))
+                previousRentPosition = i;
         }
         adapterSubrents.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSubrentsSpinner.setAdapter(adapterSubrents);
-        // Warn the user that changes might be lost if he change the selected rent
-        mSubrentsSpinner.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN && mChanges.size() > 0) {
-                    // Initialize an alert dialog
-                    AlertDialog.Builder alert = new AlertDialog.Builder(PricesActivity.this);
-                    alert.setTitle(R.string.changeSpinnerTitle);
-                    alert.setMessage(R.string.changesWillBeLost);
-                    // Set up the buttons
-                    Resources res = getResources();
-                    alert.setPositiveButton(res.getString(R.string.yes),
-                            new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            mSubrentsSpinner.performClick();
-                        }
-                    });
-                    alert.setNegativeButton(res.getString(R.string.no),
-                            new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                        }
-                    });
-                    alert.create().show();
-                    return true;
-                }
-                return false;
-            }
-        });
-        mSubrentsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                mChanges.clear();
-                updatePriceViews();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
+        // Recover the previous selected rent or clear changes
+        if (previousRentPosition != -1)
+            mSubrentsSpinner.setSelection(previousRentPosition, true);
+        else {
+            mChanges.clear();
+            mBottomLayout.setVisibility(View.GONE);
+        }
         mSubrentsSpinner.invalidate();
+        mSelectedSubrent = mSubrentsSpinner.getSelectedItem().toString();
 
         /* Populate the list of year */
         ArrayAdapter<CharSequence> adapterYears = new ArrayAdapter<CharSequence>(this,
                 R.layout.year_spinner_item);
         Set<Integer> years = mPrices.get(mIdMap.valueAt(0)).keySet();
-        for (Integer year : years)
-            adapterYears.add(String.valueOf(year));
+        // Save the previous selected year position if it exists
+        int previousYearPosition = -1;
+        int currPos = 0;
+        for (Integer year : years) {
+            String yearStr = String.valueOf(year);
+            adapterYears.add(yearStr);
+            if (mSelectedYear != null && mSelectedYear.equals(yearStr))
+                previousYearPosition = currPos;
+            currPos++;
+        }
         adapterYears.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mYearSpinner.setAdapter(adapterYears);
-        // Warn the user that changes might be lost if he change the selected year
-        mYearSpinner.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN && mChanges.size() > 0) {
-                    // Initialize an alert dialog
-                    AlertDialog.Builder alert = new AlertDialog.Builder(PricesActivity.this);
-                    alert.setTitle(R.string.changeSpinnerTitle);
-                    alert.setMessage(R.string.changesWillBeLost);
-                    // Set up the buttons
-                    Resources res = getResources();
-                    alert.setPositiveButton(res.getString(R.string.yes), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            mYearSpinner.performClick();
-                        }
-                    });
-                    alert.setNegativeButton(res.getString(R.string.no), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                        }
-                    });
-                    alert.create().show();
-                    return true;
-                }
-                return false;
-            }
-        });
-        // Update weeks and prices views when the selected year changes
-        mYearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                mChanges.clear();
-                updateWeekViews();
-                updatePriceViews();
-                // Unable copy prices button if the selected year is the last one
-                if (position == mYearSpinner.getAdapter().getCount()-1)
-                    mCopyPrices.setEnabled(false);
-                else
-                    mCopyPrices.setEnabled(true);
-            }
+        // Recover the previous selected year or clear changes
+        if (previousYearPosition != -1)
+            mYearSpinner.setSelection(previousYearPosition, true);
+        else {
+            mChanges.clear();
+            mBottomLayout.setVisibility(View.GONE);
+        }
+        mYearSpinner.invalidate();
+        mSelectedYear = mYearSpinner.getSelectedItem().toString();
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
+        /* Enable onItemSelectedListener of spinners */
+        mSubrentsSpinner.setOnItemSelectedListener(mSubrentSpinnerListener);
+        mYearSpinner.setOnItemSelectedListener(mYearSpinnerListener);
+    }
 
-        /* Populate the prices table */
+    /**
+     * Array containing all text watchers for all EditText.
+     * This array is initialized by populatePriceTable method.
+     * It is useful using removeTextChangedListener to prevent triggering
+     * when the text is set programmatically.
+     */
+    private TextWatcher[] mPriceTextWatchers = null;
+
+    /**
+     * Populate the table of prices.
+     * Add NB_WEEK rows with an empty TextView representing the week and
+     * an empty EditText representing the price.
+     */
+    private void populatePricesTable() {
         TableRow.LayoutParams params = new TableRow.LayoutParams(
                 TableRow.LayoutParams.WRAP_CONTENT,
                 TableRow.LayoutParams.WRAP_CONTENT);
         mPriceViews = new EditText[NB_WEEK];
         mWeekViews = new TextView[NB_WEEK];
         int lightCyanColor = ContextCompat.getColor(getBaseContext(), R.color.lightCyan);
+        mPriceTextWatchers = new TextWatcher[NB_WEEK];
         for (int i=0; i<NB_WEEK; i++) {
             TableRow row = new TableRow(getBaseContext());
+            // The background color is changed one row out of two
             if (i%2 == 0)
                 row.setBackgroundColor(lightCyanColor);
             else
                 row.setBackgroundColor(Color.WHITE);
+            // Create new views
             TextView weekView = new TextView(getBaseContext());
             EditText priceView = new EditText(getBaseContext());
             mPriceViews[i] = priceView;
             mWeekViews[i] = weekView;
+            // Change style
             int darkBlueColor = ContextCompat.getColor(getBaseContext(), R.color.darkBlue);
             weekView.setTextColor(darkBlueColor);
             weekView.setPadding(20,10,20,10);
@@ -405,9 +465,12 @@ public class PricesActivity extends Activity {
                     }
                 });
             }
-            // Save changes made in a HashMap to update the database later.
+            /* Create a new text watcher.
+                It will save changes made by the user in mChanges,
+                and will hide or show mBottomLayout to cancel or save changes.
+             */
             final int week = i+1;
-            priceView.addTextChangedListener(new TextWatcher() {
+            mPriceTextWatchers[i] = new TextWatcher() {
                 private int mWeek = week;
 
                 @Override
@@ -420,15 +483,14 @@ public class PricesActivity extends Activity {
 
                 @Override
                 public void afterTextChanged(Editable s) {
-                    String rent = mSubrentsSpinner.getSelectedItem().toString();
-                    int year = Integer.valueOf(mYearSpinner.getSelectedItem().toString());
-                    Integer oldPrice = mPrices.get(rent).get(year).get(mWeek);
+                    int year = Integer.valueOf(mSelectedYear);
+                    Integer oldPrice = mPrices.get(mSelectedSubrent).get(year).get(mWeek);
                     String newString = s.toString();
                     if (newString.isEmpty()) {
                         if (oldPrice == null)
                             mChanges.remove(mWeek);
                         else
-                            // Put -1 to know the user remove this value
+                            // Put -1 to know the user removed this value
                             mChanges.put(mWeek, -1);
                     }
                     else {
@@ -445,7 +507,8 @@ public class PricesActivity extends Activity {
                     else
                         mBottomLayout.setVisibility(View.GONE);
                 }
-            });
+            };
+            priceView.addTextChangedListener(mPriceTextWatchers[i]);
             row.addView(weekView, params);
             row.addView(priceView, params);
             mTablePrices.addView(row);
@@ -462,7 +525,7 @@ public class PricesActivity extends Activity {
         }
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("MMMM", Locale.getDefault());
-        cal.set(Calendar.YEAR, Integer.valueOf(mYearSpinner.getSelectedItem().toString()));
+        cal.set(Calendar.YEAR, Integer.valueOf(mSelectedYear));
         cal.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
         for (int week=1; week<=NB_WEEK; week++) {
             // Update the dates
@@ -478,22 +541,36 @@ public class PricesActivity extends Activity {
     }
 
     /**
-     * Update TextView of the second column in the TableLayout
+     * Update EditText of the second column in the TableLayout
      * and display the prices depending on the selected rent.
      */
     private void updatePriceViews() {
         if (mPriceViews == null) {
             return;
         }
-        int selectedYear = Integer.valueOf(mYearSpinner.getSelectedItem().toString());
-        String selectedRent = mSubrentsSpinner.getSelectedItem().toString();
-        HashMap<Integer, Integer> prices = mPrices.get(selectedRent).get(selectedYear);
+        int selectedYear = Integer.valueOf(mSelectedYear);
+        // Disable onTextChangedListener of EditText */
+        for (int i=0; i<NB_WEEK; i++) {
+            mPriceViews[i].removeTextChangedListener(mPriceTextWatchers[i]);
+        }
+        // Update prices with those saved in the database.
+        HashMap<Integer, Integer> prices = mPrices.get(mSelectedSubrent).get(selectedYear);
         for (int week=1; week<=NB_WEEK; week++) {
-            // Update prices
             TextView priceView = mPriceViews[week-1];
             Integer price = prices.get(week);
             priceView.setText((price!=null) ? String.valueOf(price) : "");
             priceView.invalidate();
+        }
+        // Update prices with changes made.
+        for (int week : mChanges.keySet()) {
+            TextView priceView = mPriceViews[week-1];
+            int price = mChanges.get(week);
+            priceView.setText((price!=-1) ? String.valueOf(price) : "");
+            priceView.invalidate();
+        }
+        // Enable onTextChangedListener of EditText */
+        for (int i=0; i<NB_WEEK; i++) {
+            mPriceViews[i].addTextChangedListener(mPriceTextWatchers[i]);
         }
     }
 
@@ -502,13 +579,12 @@ public class PricesActivity extends Activity {
      * mChanges is cleared before the copy.
      */
     private void copyPricesPreviousYear() {
-        String selectedRent = mSubrentsSpinner.getSelectedItem().toString();
-        int selectedYear = Integer.valueOf(mYearSpinner.getSelectedItem().toString());
-        HashMap<Integer, Integer> newChanges = mPrices.get(selectedRent).get(selectedYear-1);
+        int selectedYear = Integer.valueOf(mSelectedYear);
+        HashMap<Integer, Integer> newChanges = mPrices.get(mSelectedSubrent).get(selectedYear-1);
         if (newChanges != null) {
             mChanges.clear();
             // First remove all prices set for the selected year
-            for (int week : mPrices.get(selectedRent).get(selectedYear).keySet())
+            for (int week : mPrices.get(mSelectedSubrent).get(selectedYear).keySet())
                 mChanges.put(week, -1);
             // Then add prices of the previous year to mChanges
             for (int week : newChanges.keySet())
@@ -519,45 +595,42 @@ public class PricesActivity extends Activity {
                 mPriceViews[week-1].setText( price!=null ? String.valueOf(price) : "");
                 mPriceViews[week-1].invalidate();
             }
+            // Show or hide the bottom layout
+            if (mChanges.size() > 0)
+                mBottomLayout.setVisibility(View.VISIBLE);
+            else
+                mBottomLayout.setVisibility(View.GONE);
         }
     }
 
     private void saveChangesPostRequest() {
-        // At most 1 post request is running
-        if (mRequestRunning) {
-            Toast.makeText(getBaseContext(), "A request is already running",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
-        // Disable the sub-rents spinner during the post request
-        mSubrentsSpinner.setEnabled(false);
+        // Disable the button to save changes
+        mSaveChangesButton.setEnabled(false);
         // Launch the post request
-        mRequestRunning = true;
         SendPostRequest req = new SendPostRequest(SendPostRequest.SET_AND_GET_PRICES);
         req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
         req.addPostParam(SendPostRequest.RENT_NAME_KEY, mWholeRent);
         // Sub-rent to update prices
-        String name = mSubrentsSpinner.getSelectedItem().toString();
         int key = -1;
         int idMapSize = mIdMap.size();
         for (int i=0; i<idMapSize; ++i) {
             // Need to browse manually because SparseArray uses references for comparison.
-            if (mIdMap.valueAt(i).equals(name))
+            if (mIdMap.valueAt(i).equals(mSelectedSubrent))
                 key = mIdMap.keyAt(i);
         }
         req.addPostParam(SendPostRequest.SUBRENT_KEY, key);
-        String year = mYearSpinner.getSelectedItem().toString();
-        req.addPostParam(SendPostRequest.YEAR_KEY, year);
+        req.addPostParam(SendPostRequest.YEAR_KEY, mSelectedYear);
         req.addPostParam(SendPostRequest.PRICES_KEY, mChanges.toString());
         req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
             @Override
             public void postExecute(boolean success, String result) {
                 if (success) {
                     try {
-                        mChanges.clear();
                         mIdMap.clear();
                         mPrices.clear();
+                        mChanges.clear();
+                        mBottomLayout.setVisibility(View.GONE);
                         // Save new prices in local variables
                         parsePrices(result);
                         // Update the table view
@@ -576,9 +649,8 @@ public class PricesActivity extends Activity {
                     Toast.makeText(getBaseContext(), R.string.connectionError,
                             Toast.LENGTH_SHORT).show();
                 }
-                // Enable the sub-rents spinner
-                mSubrentsSpinner.setEnabled(true);
-                mRequestRunning = false;
+                // Enable the button to save changes
+                mSaveChangesButton.setEnabled(true);
             }
         });
         req.execute();
