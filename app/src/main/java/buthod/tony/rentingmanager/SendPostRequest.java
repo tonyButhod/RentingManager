@@ -34,15 +34,15 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             SUBRENTS_KEY = "subrents",
             RENT_NAME_KEY = "name",
             BOOKING_KEY = "booking",
-            WEEK_KEY = "week",
             YEAR_KEY = "year",
             RENT_KEY = "rent",
             TENANT_KEY = "tenant",
-            WEEKS_KEY = "weeks",
             PRICES_KEY = "prices",
             SUBRENT_KEY = "subrent",
             MIN_DATE_KEY = "minDate",
-            NEW_PASSWORD_KEY = "newPassword";
+            NEW_PASSWORD_KEY = "newPassword",
+            DATE_KEY = "date",
+            DURATION_KEY = "duration";
     // Web pages
     public final static String
             LOGIN = "login.php",

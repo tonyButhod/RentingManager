@@ -37,10 +37,8 @@ if (isset($_POST['minDate'])) {
   $minDate = new DateTime($_POST['minDate']);
   $req = $bdd->prepare('SELECT * FROM booking
                         WHERE rent IN ('.join(",",$subrents_id).')
-                        AND ((week >= :minWeek AND year = :minYear)
-                            OR year > :minYear);');
-  $req->execute(array('minWeek' => $minDate->format("W"),
-                      'minYear' => $minDate->format("Y")));
+                        AND DATE_ADD(date, INTERVAL duration-1 DAY) >= :minDate;');
+  $req->execute(array('minDate' => $minDate->format("Y-m-d")));
 }
 else {
   $req = $bdd->prepare('SELECT * FROM booking
@@ -50,8 +48,8 @@ else {
 $booking = [];
 while ($res = $req->fetch()) {
   $booking[] = array('rent' => $res['rent'],
-                     'week' => $res['week'],
-                     'year' => $res['year'],
+                     'date' => date("Ymd", strtotime($res['date'])),
+                     'duration' => $res['duration'],
                      'tenant' => $res['tenant']);
 }
 $req->closeCursor();

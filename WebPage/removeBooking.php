@@ -2,8 +2,7 @@
 include('authentication.php');
 
 if (!isset($_POST['rent']) || 
-    !isset($_POST['week']) || 
-    !isset($_POST['year'])) {
+    !isset($_POST['date'])) {
   exit();
 }
 
@@ -24,10 +23,9 @@ if ($user['access'] == 0 && !in_array($user['id'], $owners)) {
 
 // Remove the booking
 $req = $bdd->prepare('DELETE FROM booking
-                      WHERE week = :week AND year = :year AND rent = :rent;');
+                      WHERE date = :date AND rent = :rent;');
 $success = $req->execute(array('rent' => $_POST['rent'],
-                               'week' => $_POST['week'],
-                               'year' => $_POST['year']));
+                               'date' => DateTime::createFromFormat('Ymd', $_POST['date'])->format('Y-m-d')));
 $rowsDeleted = $req->rowCount();
 $req->closeCursor();
 

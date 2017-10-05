@@ -5,6 +5,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -30,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -71,6 +74,8 @@ public class RentActivity extends FragmentActivity {
     private RentalBooking mBooking = null;
     private String mWholeRent = null;
     private Date mSelectedDate = null;
+    private int mSelectedDuration = 0;
+    private boolean mIsOnSelection = false;
     private Date mMinDate = null;
 
 
@@ -178,16 +183,79 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void onSelectDate(Date date, View view) {
                 // Select the whole week and update tenant
-                selectWeekFromDate(date);
-                updateTenantInfo();
+                mCaldroidFragment.clearSelectedDates();
+                if (mIsOnSelection) {
+                    // The user did a long click, several date are selected
+                    mCaldroidFragment.clearBackgroundDrawableForDate(mSelectedDate);
+                    Calendar clickedDate = Calendar.getInstance();
+                    clickedDate.setTime(date);
+                    Calendar currDate = Calendar.getInstance();
+                    currDate.setTime(mSelectedDate);
+                    // Estimation of days between 2 dates
+                    int daysBetween = (int) ((date.getTime()-mSelectedDate.getTime())/86400000);
+                    // Calculate the exact number of days between 2 dates using the previous value
+                    currDate.add(Calendar.DATE, daysBetween);
+                    while (currDate.compareTo(clickedDate) < 0) {
+                        currDate.add(Calendar.DATE, 1);
+                        daysBetween++;
+                    }
+                    while (currDate.compareTo(clickedDate) > 0) {
+                        currDate.add(Calendar.DATE, -1);
+                        daysBetween--;
+                    }
+                    if (daysBetween > 0) {
+                        mSelectedDuration = daysBetween + 1;
+                        mCaldroidFragment.setSelectedDates(mSelectedDate, date);
+                    }
+                    else {
+                        mSelectedDuration = -daysBetween + 1;
+                        mCaldroidFragment.setSelectedDates(date, mSelectedDate);
+                        mSelectedDate = date;
+                    }
+                }
+                else {
+                    // Select the clicked date
+                    mSelectedDuration = 1;
+                    mSelectedDate = date;
+                    mCaldroidFragment.setSelectedDate(mSelectedDate);
+                    updateTenantInfo();
+                }
+                mIsOnSelection = false;
+                mCaldroidFragment.refreshView();
             }
 
             @Override
             public void onChangeMonth(int month, int year) {
-                mSelectedDate = null;
+            }
+
+            @Override
+            public void onLongClickDate(Date date, View view) {
+                if (mSelectedDate != null && mIsOnSelection)
+                    mCaldroidFragment.clearBackgroundDrawableForDate(mSelectedDate);
+                mSelectedDate = date;
+                mSelectedDuration = 0;
+                mIsOnSelection = true;
                 mCaldroidFragment.clearSelectedDates();
+                // Draw a green border on the long clicked date
+                Drawable greenBorder = null;
+                switch (mCaldroidFragment.getBookingState(mSelectedDate)) {
+                    case CaldroidBookingFragment.FREE:
+                        greenBorder = ContextCompat.getDrawable(getBaseContext(),
+                                R.drawable.green_border_default);
+                        break;
+                    case CaldroidBookingFragment.HALF_FULL:
+                        greenBorder = ContextCompat.getDrawable(getBaseContext(),
+                                R.drawable.green_border_half_full);
+                        break;
+                    case CaldroidBookingFragment.FULL:
+                        greenBorder = ContextCompat.getDrawable(getBaseContext(),
+                                R.drawable.green_border_full);
+                        break;
+                }
+                mCaldroidFragment.setBackgroundDrawableForDate(greenBorder, mSelectedDate);
                 mCaldroidFragment.refreshView();
-                updateTenantInfo();
+                mTenants.removeAllViews();
+                mTenants.invalidate();
             }
         });
         // Commit changes
@@ -243,7 +311,7 @@ public class RentActivity extends FragmentActivity {
                         updateCaldroidView();
                         updateTenantInfo();
                     }
-                    catch (JSONException e) {
+                    catch (JSONException | ParseException e) {
                         // Invalid username or password or rent name.
                         Intent intent = new Intent(getBaseContext(), MainActivity.class);
                         startActivity(intent);
@@ -266,7 +334,7 @@ public class RentActivity extends FragmentActivity {
      * Update also the spinner and the booking right.
      * @param result The string to parse with JSON format.
      */
-    private void parseInfo(String result) throws JSONException {
+    private void parseInfo(String result) throws JSONException, ParseException {
         mBooking.clear();
 
         JSONObject resObj = new JSONObject(result);
@@ -307,19 +375,16 @@ public class RentActivity extends FragmentActivity {
         mSelectedSubrent = mSpinner.getSelectedItem().toString();
 
         /* Parse the result for booking */
-        Calendar cal = Calendar.getInstance();
         // First calculate the number of sub-rents rented while parsing.
         JSONArray bookings = resObj.getJSONArray(SendPostRequest.BOOKING_KEY);
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
         for (int i=0; i<bookings.length(); i++) {
             JSONObject booking = bookings.getJSONObject(i);
-            cal.clear();
-            cal.set(Calendar.YEAR, booking.getInt(SendPostRequest.YEAR_KEY));
-            cal.set(Calendar.WEEK_OF_YEAR, booking.getInt(SendPostRequest.WEEK_KEY));
-            cal.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
             int id_rent = booking.getInt(SendPostRequest.RENT_KEY);
+            Date date = format.parse(booking.getString(SendPostRequest.DATE_KEY));
+            int duration = booking.getInt(SendPostRequest.DURATION_KEY);
             String tenant = booking.getString(SendPostRequest.TENANT_KEY);
-            Date date = cal.getTime();
-            mBooking.addBooking(id_rent, date, tenant);
+            mBooking.addBooking(id_rent, date, duration, tenant);
         }
     }
 
@@ -352,23 +417,27 @@ public class RentActivity extends FragmentActivity {
             // Iterate on booking per sub-rent
             if (subrent.equals(mSelectedSubrent) || subrent.equals(mWholeRent)) {
                 // The rent is full
-                for (Map.Entry<Date, String> booking : mBooking.getBookingEntrySet(subrent))
-                    mCaldroidFragment.setWeekBookingForDate(booking.getKey(),
-                            CaldroidBookingFragment.FULL);
+                for (RentalBooking.BookingInformation b : mBooking.getAllBookings(subrent))
+                    mCaldroidFragment.addBooking(b.date, b.duration, CaldroidBookingFragment.FULL);
             }
             else {
                 // The rent can be full or partially rented depending on whether all sub-rents
                 // are rented or not.
-                for (Map.Entry<Date, String> booking : mBooking.getBookingEntrySet(subrent)) {
+                for (RentalBooking.BookingInformation b : mBooking.getAllBookings(subrent)) {
                     // Count the number of sub-rents to know if the whole rent is rented.
-                    Date date = booking.getKey();
-                    Integer nb_booking = nbBookingMap.get(date);
-                    int new_nb_booking = ((nb_booking!=null)?nb_booking:0) + 1;
-                    nbBookingMap.put(date, new_nb_booking);
-                    // Put the week state in CaldroidBookingFragment
-                    int state = (new_nb_booking == nb_subrents)?
-                            CaldroidBookingFragment.FULL : CaldroidBookingFragment.HALF_FULL;
-                    mCaldroidFragment.setWeekBookingForDate(date, state);
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(b.date);
+                    for (int i=0; i<b.duration; i++) {
+                        Date date = cal.getTime();
+                        Integer nb_booking = nbBookingMap.get(date);
+                        int new_nb_booking = ((nb_booking != null) ? nb_booking : 0) + 1;
+                        nbBookingMap.put(date, new_nb_booking);
+                        // Put the week state in CaldroidBookingFragment
+                        int state = (new_nb_booking == nb_subrents) ?
+                                CaldroidBookingFragment.FULL : CaldroidBookingFragment.HALF_FULL;
+                        mCaldroidFragment.addBooking(date, state);
+                        cal.add(Calendar.DATE, 1);
+                    }
                 }
             }
         }
@@ -394,21 +463,6 @@ public class RentActivity extends FragmentActivity {
         mTenants.invalidate();
     }
 
-    private void selectWeekFromDate(Date date) {
-        // Get the date of previous saturday
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        int diffDate = (cal.get(Calendar.DAY_OF_WEEK) - Calendar.SATURDAY + 7) % 7;
-        cal.add(Calendar.DATE, -diffDate);
-        Date startDate = cal.getTime();
-        cal.add(Calendar.DATE, 6);
-        Date endDate = cal.getTime();
-        // Put all the week as selected
-        mCaldroidFragment.setSelectedDates(startDate, endDate);
-        mCaldroidFragment.refreshView();
-        mSelectedDate = startDate;
-    }
-
     private void showAddBookingDialog() {
         // Check if the user has the right to add a booking
         if (!mBookingRight) {
@@ -417,13 +471,13 @@ public class RentActivity extends FragmentActivity {
             return;
         }
         // Check if a date is selected
-        if (mSelectedDate == null) {
+        if (mSelectedDate == null || mSelectedDuration == 0) {
             Toast.makeText(getBaseContext(), R.string.noDateSelected,
                     Toast.LENGTH_SHORT).show();
             return;
         }
         // Check if at least one rent is free
-        List<String> freeRents = mBooking.getFreeRentsForDate(mSelectedDate);
+        List<String> freeRents = mBooking.getFreeRentsForDate(mSelectedDate, mSelectedDuration);
         if (freeRents.size() == 0) {
             Toast.makeText(getBaseContext(), R.string.noRentFree,
                     Toast.LENGTH_SHORT).show();
@@ -444,7 +498,7 @@ public class RentActivity extends FragmentActivity {
         // Set the text of the date view
         Calendar cal = Calendar.getInstance();
         cal.setTime(mSelectedDate);
-        cal.add(Calendar.DATE, 6);
+        cal.add(Calendar.DATE, mSelectedDuration-1);
         SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
         dateView.setText(format.format(mSelectedDate) + " - " + format.format(cal.getTime()));
         // Populate the spinner of alert dialog with free rents.
@@ -476,13 +530,12 @@ public class RentActivity extends FragmentActivity {
                 b.setOnClickListener(new View.OnClickListener(){
                     @Override
                     public void onClick(View view) {
-                        errorView.setText("");
                         String rent = rentChoice.getSelectedItem().toString();
                         String tenant = tenantInput.getText().toString();
-                        if (tenant.isEmpty()) {
-                            errorView.setText(R.string.emptyTenant);
-                        }
+                        if (tenant.isEmpty())
+                            errorView.setVisibility(View.VISIBLE);
                         else {
+                            errorView.setVisibility(View.GONE);
                             addBookingPostRequest(rent, tenant);
                             alertDialog.dismiss();
                         }
@@ -494,15 +547,15 @@ public class RentActivity extends FragmentActivity {
     }
 
     private void addBookingPostRequest(final String rent, final String tenant) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(mSelectedDate);
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
         final Date dateRequest = mSelectedDate;
+        final int durationRequest = mSelectedDuration;
         final int rentId = mBooking.getIdRent(rent);
         SendPostRequest req = new SendPostRequest(SendPostRequest.ADD_BOOKING);
         req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
-        req.addPostParam(SendPostRequest.WEEK_KEY, cal.get(Calendar.WEEK_OF_YEAR));
-        req.addPostParam(SendPostRequest.YEAR_KEY, cal.get(Calendar.YEAR));
+        req.addPostParam(SendPostRequest.DATE_KEY, format.format(mSelectedDate));
+        req.addPostParam(SendPostRequest.DURATION_KEY, mSelectedDuration);
         req.addPostParam(SendPostRequest.RENT_KEY, rentId);
         req.addPostParam(SendPostRequest.TENANT_KEY, tenant);
         req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
@@ -512,7 +565,7 @@ public class RentActivity extends FragmentActivity {
                     if (result.equals(SendPostRequest.ACTION_OK)) {
                         Toast.makeText(getBaseContext(), R.string.newBooking,
                                 Toast.LENGTH_SHORT).show();
-                        mBooking.addBooking(rentId, dateRequest, tenant);
+                        mBooking.addBooking(rentId, dateRequest, durationRequest, tenant);
                         mSelectedDate = null;
                         mCaldroidFragment.clearSelectedDates();
                         updateCaldroidView();
@@ -568,18 +621,21 @@ public class RentActivity extends FragmentActivity {
         final TextView tenantView = (TextView) alertView.findViewById(R.id.tenant);
         final Spinner rentChoice = (Spinner) alertView.findViewById(R.id.rent_choice);
         final TextView dateView = (TextView) alertView.findViewById(R.id.date);
-        // Set the text of the date view
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(mSelectedDate);
-        cal.add(Calendar.DATE, 6);
-        SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
-        dateView.setText(format.format(mSelectedDate) + " - " + format.format(cal.getTime()));
         // Update the tenant depending on the selected sub-rent.
         rentChoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedRent = rentChoice.getSelectedItem().toString();
+                // Set text for tenant
                 tenantView.setText(mBooking.getTenant(selectedRent, mSelectedDate));
+                // Set text for booking date
+                RentalBooking.BookingInformation info =
+                        mBooking.getBookingInformation(selectedRent, mSelectedDate);
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(info.date);
+                cal.add(Calendar.DATE, info.duration-1);
+                SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
+                dateView.setText(format.format(info.date)+" - "+format.format(cal.getTime()));
             }
 
             @Override
@@ -616,16 +672,14 @@ public class RentActivity extends FragmentActivity {
     }
 
     private void removeBookingPostRequest(final String rent) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(mSelectedDate);
-        final Date dateRequest = mSelectedDate;
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
         final int rentId = mBooking.getIdRent(rent);
         SendPostRequest req = new SendPostRequest(SendPostRequest.REMOVE_BOOKING);
         req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
-        req.addPostParam(SendPostRequest.WEEK_KEY, cal.get(Calendar.WEEK_OF_YEAR));
-        req.addPostParam(SendPostRequest.YEAR_KEY, cal.get(Calendar.YEAR));
         req.addPostParam(SendPostRequest.RENT_KEY, rentId);
+        final Date dateRequest = mBooking.getBookingInformation(rent, mSelectedDate).date;
+        req.addPostParam(SendPostRequest.DATE_KEY, format.format(dateRequest));
         req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
             @Override
             public void postExecute(boolean success, String result) {

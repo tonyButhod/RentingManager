@@ -20,4 +20,5 @@
     <color name="default_bg_disabled">#FFFFFF</color>
     <color name="default_bg_focused">#EEEEEE</color>
     <color name="stroke_today">#3377DD</color>
+    <color name="green">#229922</color>
 </resources>

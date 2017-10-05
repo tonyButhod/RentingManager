@@ -22,16 +22,21 @@ public class CaldroidBookingFragment extends CaldroidFragment {
     protected HashMap<Date, Integer> bookingDates = new HashMap<>();
     private Calendar mCalendar = Calendar.getInstance();
 
-    public void setBookingForDate(Date date, int state) {
-        bookingDates.put(date, state);
-    }
-
-    public void setWeekBookingForDate(Date date, int state) {
+    public void addBooking(Date date, int duration, int state) {
         mCalendar.setTime(date);
-        for (int i=0; i<7; i++) {
+        for (int i=0; i<duration; i++) {
             bookingDates.put(mCalendar.getTime(), state);
             mCalendar.add(Calendar.DATE, 1);
         }
+    }
+
+    public void addBooking(Date date, int state) {
+        bookingDates.put(date, state);
+    }
+
+    public int getBookingState(Date date) {
+        Integer state = bookingDates.get(date);
+        return (state != null) ? state : 0;
     }
 
     public void clearBooking() {

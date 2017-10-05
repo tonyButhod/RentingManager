@@ -25,8 +25,8 @@ SET time_zone = "+00:00";
 CREATE TABLE `booking` (
   `id` int(11) NOT NULL,
   `rent` int(11) NOT NULL,
-  `week` int(11) NOT NULL,
-  `year` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `duration` int(11) NOT NULL,
   `tenant` varchar(100) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -100,8 +100,7 @@ CREATE TABLE `user` (
 -- Indexes for table `booking`
 --
 ALTER TABLE `booking`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `rent` (`rent`,`week`,`year`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `owner`

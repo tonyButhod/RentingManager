@@ -98,15 +98,17 @@ public class SettingsActivity extends Activity {
                 b.setOnClickListener(new View.OnClickListener(){
                     @Override
                     public void onClick(View view) {
-                        errorsView.setText("");
+                        errorsView.setVisibility(View.GONE);
                         String oldPassword = oldPasswordEdit.getText().toString();
                         String newPassword = newPasswordEdit.getText().toString();
                         String confirmation = confirmationEdit.getText().toString();
                         if (!newPassword.equals(confirmation)) {
                             errorsView.setText(R.string.confirmationIncorrect);
+                            errorsView.setVisibility(View.VISIBLE);
                         }
                         else if (newPassword.length() < 8) {
                             errorsView.setText(R.string.atLeast8Char);
+                            errorsView.setVisibility(View.VISIBLE);
                         }
                         else {
                             changePasswordPostRequest(oldPassword, newPassword, confirmation);

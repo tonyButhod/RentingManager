@@ -2,7 +2,7 @@
 include('authentication.php');
 
 if (!isset($_POST['rent']) || !isset($_POST['tenant']) || 
-    !isset($_POST['week']) || !isset($_POST['year'])) {
+    !isset($_POST['date']) || !isset($_POST['duration'])) {
   exit();
 }
 
@@ -46,42 +46,40 @@ if ($user['access'] == 0 && !in_array($user['id'], $owners)) {
   exit();
 }
 
-$req = null;
-if ($isSubrent) {
-  /* Insert into booking by checking if the whole rent is rented at the given date.
-     If this is the case, no row is inserted. */
-  $req = $bdd->prepare('INSERT INTO booking (rent, week, year, tenant)
-                        SELECT :rent, :week, :year, :tenant
-                        FROM dual
-                        WHERE NOT EXISTS (
-                            SELECT 1 FROM subrent s, booking b
-                            WHERE b.rent = s.rent AND s.subrent = :rent
-                                  AND b.week = :week AND b.year = :year
-                        );');
+$bdd->beginTransaction();
+$req = $bdd->prepare('SELECT * FROM booking
+                      WHERE rent = :rent OR rent IN (
+                          SELECT rent FROM subrent WHERE subrent = :rent
+                      );');
+$req->execute(array('rent' => $_POST['rent']));
+/* Check if the rent is free */
+while ($booking = $req->fetch()) {
+  $bookingDate = new DateTime($booking['date']);
+  $startDate = new DateTime($_POST['date']);
+  $endDate = new DateTime($_POST['date']);
+  $endDate->add(new DateInterval('P'.($_POST['duration']-1).'D'));
+  if ($bookingDate <= $endDate) {
+    $bookingDate->add(new DateInterval('P'.($booking['duration']-1).'D'));
+    if ($bookingDate >= $startDate) {
+      /* The rent is not free */
+      echo "Rent not free";
+      exit();
+    }
+  }
 }
-else {
-  /* Insert into booking by checking if a sub-rent is rented.
-     If this is the case, no row is inserted. */
-  $req = $bdd->prepare('INSERT INTO booking (rent, week, year, tenant)
-                        SELECT :rent, :week, :year, :tenant
-                        FROM dual
-                        WHERE NOT EXISTS (
-                            SELECT 1 FROM subrent s, booking b
-                            WHERE b.rent = s.subrent AND s.rent = :rent
-                                  AND b.week = :week AND b.year = :year
-                        );');
-}
-$success = $req->execute(array('rent' => $_POST['rent'],
-                               'week' => $_POST['week'],
-                               'year' => $_POST['year'],
-                               'tenant' => $_POST['tenant']));
+$req->closeCursor();
+/* The rent is free, so the booking is inserted */
+$req = $bdd->prepare('INSERT INTO booking (rent, date, duration, tenant)
+                      SELECT :rent, :date, :duration, :tenant;');
+$req->execute(array('rent' => $_POST['rent'],
+                    'date' => DateTime::createFromFormat('Ymd', $_POST['date'])->format('Y-m-d'),
+                    'duration' => $_POST['duration'],
+                    'tenant' => $_POST['tenant']));
 $rowsInserted = $req->rowCount();
 $req->closeCursor();
+$bdd->commit();
 
-// (rent, week, year) are unique in the table.
-// So if a booking already exists for a rent at the given date,
-// no row is inserted and execute() return false (true otherwise).
-if ($success && $rowsInserted == 1)
+if ($rowsInserted == 1)
   echo "OK";
 else
   echo "Rent not free";
