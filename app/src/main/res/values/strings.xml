@@ -1,6 +1,6 @@
 <resources>
     <!-- General -->
-    <string name="app_name">Dwelling</string>
+    <string name="app_name">Rents</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="yes">Yes</string>
