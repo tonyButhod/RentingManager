@@ -147,7 +147,7 @@ public class SettingsActivity extends Activity {
                                 Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = prefs.edit();
                         editor.putString(SendPostRequest.HASH_KEY, result);
-                        editor.apply();
+                        editor.commit();
                         Toast.makeText(getBaseContext(), R.string.newPasswordSaved,
                                 Toast.LENGTH_SHORT).show();
                     }

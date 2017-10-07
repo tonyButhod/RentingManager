@@ -16,7 +16,8 @@
         android:id="@+id/toolbar"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/Toolbar">
+        android:theme="@style/Toolbar"
+        style="@style/Toolbar">
 
         <Button
             android:id="@+id/user_button"

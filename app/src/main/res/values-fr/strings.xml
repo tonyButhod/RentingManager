@@ -12,6 +12,7 @@
     <string name="username">Indentifiant</string>
     <string name="password">Mot de passe</string>
     <string name="sign_in">Connexion</string>
+    <string name="runningConnection">Connexion déjà en cours</string>
     <!-- Main activity -->
     <string name="sign_out">Déconnexion</string>
     <!-- Rent activity -->
@@ -33,7 +34,7 @@
     <string name="changeSpinnerTitle">Voulez-vous continuer ?</string>
     <string name="changesWillBeLost">Les changements seront perdus.</string>
     <string name="changeSaved">Les changements ont été sauvegardés</string>
-    <string name="copyPrices">Copier prix précédents</string>
+    <string name="copyPrices">Copier prix</string>
     <!-- Settings activity -->
     <string name="changePassword">Changer mot de passe</string>
     <string name="old_password">Ancien mot de passe</string>

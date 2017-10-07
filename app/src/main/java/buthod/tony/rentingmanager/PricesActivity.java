@@ -72,7 +72,7 @@ public class PricesActivity extends Activity {
     /* First key corresponds to sub-rent name. Second key is the year.
         The last one is the week number, and finally the price is obtained.
      */
-    private HashMap<String, HashMap<Integer, HashMap<Integer, Integer>>> mPrices = new HashMap<>();
+    private HashMap<String, SparseArray<SparseArray<Integer>>> mPrices = new HashMap<>();
     private SparseArray<String> mIdMap = new SparseArray<>();
     /* Contains the changes made on prices
     If the user remove a price, it contains the value -1.
@@ -192,6 +192,11 @@ public class PricesActivity extends Activity {
         mCopyPrices.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!mEditRight) {
+                    Toast.makeText(getBaseContext(), R.string.noEditPriceRight,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (mChanges.size() > 0) {
                     // Initialize an alert dialog
                     AlertDialog.Builder alert = new AlertDialog.Builder(PricesActivity.this);
@@ -329,22 +334,22 @@ public class PricesActivity extends Activity {
             String rentName = subrent.getString(SendPostRequest.RENT_NAME_KEY);
             int rentId = subrent.getInt(SendPostRequest.ID_KEY);
             mIdMap.put(rentId, rentName);
-            HashMap<Integer, HashMap<Integer, Integer>> pricesSubrentHash = new HashMap<>();
+            SparseArray<SparseArray<Integer>> pricesSubrent = new SparseArray<>();
             JSONObject prices = subrent.getJSONObject(SendPostRequest.PRICES_KEY);
             JSONArray years = prices.names();
             for (int j = 0; j < years.length(); j++) {
                 // Browse the years
                 int year = years.getInt(j);
-                pricesSubrentHash.put(year, new HashMap<Integer, Integer>());
+                pricesSubrent.put(year, new SparseArray<Integer>());
                 JSONArray yearPrices = prices.getJSONArray(years.getString(j));
                 for (int k = 0; k < yearPrices.length(); k++) {
                     JSONObject weekPrice = yearPrices.getJSONObject(k);
                     int week = weekPrice.names().getInt(0);
                     int price = weekPrice.getInt(weekPrice.names().getString(0));
-                    pricesSubrentHash.get(year).put(week, price);
+                    pricesSubrent.get(year).put(week, price);
                 }
             }
-            mPrices.put(rentName, pricesSubrentHash);
+            mPrices.put(rentName, pricesSubrent);
         }
     }
 
@@ -383,11 +388,12 @@ public class PricesActivity extends Activity {
         /* Populate the list of year */
         ArrayAdapter<CharSequence> adapterYears = new ArrayAdapter<CharSequence>(this,
                 R.layout.year_spinner_item);
-        Set<Integer> years = mPrices.get(mIdMap.valueAt(0)).keySet();
+        SparseArray<SparseArray<Integer>> years = mPrices.get(mIdMap.valueAt(0));
         // Save the previous selected year position if it exists
         int previousYearPosition = -1;
         int currPos = 0;
-        for (Integer year : years) {
+        for (int i=years.size()-1; i>=0; --i) {
+            int year = years.keyAt(i);
             String yearStr = String.valueOf(year);
             adapterYears.add(yearStr);
             if (mSelectedYear != null && mSelectedYear.equals(yearStr))
@@ -456,6 +462,8 @@ public class PricesActivity extends Activity {
             priceView.setInputType(InputType.TYPE_CLASS_NUMBER);
             // Disable changes if the user has no rights
             priceView.setFocusable(mEditRight);
+            priceView.setFocusableInTouchMode(mEditRight);
+            priceView.setLongClickable(mEditRight);
             if (!mEditRight) {
                 priceView.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -554,7 +562,7 @@ public class PricesActivity extends Activity {
             mPriceViews[i].removeTextChangedListener(mPriceTextWatchers[i]);
         }
         // Update prices with those saved in the database.
-        HashMap<Integer, Integer> prices = mPrices.get(mSelectedSubrent).get(selectedYear);
+        SparseArray<Integer> prices = mPrices.get(mSelectedSubrent).get(selectedYear);
         for (int week=1; week<=NB_WEEK; week++) {
             TextView priceView = mPriceViews[week-1];
             Integer price = prices.get(week);
@@ -580,15 +588,18 @@ public class PricesActivity extends Activity {
      */
     private void copyPricesPreviousYear() {
         int selectedYear = Integer.valueOf(mSelectedYear);
-        HashMap<Integer, Integer> newChanges = mPrices.get(mSelectedSubrent).get(selectedYear-1);
+        SparseArray<Integer> newChanges = mPrices.get(mSelectedSubrent).get(selectedYear-1);
         if (newChanges != null) {
             mChanges.clear();
             // First remove all prices set for the selected year
-            for (int week : mPrices.get(mSelectedSubrent).get(selectedYear).keySet())
-                mChanges.put(week, -1);
+            SparseArray<Integer> pricesPerWeek = mPrices.get(mSelectedSubrent).get(selectedYear);
+            for (int i=0; i<pricesPerWeek.size(); ++i)
+                mChanges.put(pricesPerWeek.keyAt(i), -1);
             // Then add prices of the previous year to mChanges
-            for (int week : newChanges.keySet())
+            for (int i=0; i<newChanges.size(); ++i) {
+                int week = newChanges.keyAt(i);
                 mChanges.put(week, newChanges.get(week));
+            }
             // Finally, update prices views
             for (int week = 1; week <= NB_WEEK; week++) {
                 Integer price = newChanges.get(week);

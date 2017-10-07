@@ -111,8 +111,7 @@ foreach ($subrents_id as $id) {
 // Recover information concerning prices
 $req = $bdd->prepare('SELECT * FROM price
                       WHERE rent IN ('.join(",",$subrents_id).')
-                      AND year IN ('.join(",",$selected_years).')
-                      ORDER BY year DESC;');
+                      AND year IN ('.join(",",$selected_years).')');
 $req->execute();
 while ($res = $req->fetch()) {
   $year = $res['year'];

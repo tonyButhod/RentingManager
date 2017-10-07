@@ -90,6 +90,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        // Check preferences in case the password has been changed
+        SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
+        String hashPref = prefs.getString(SendPostRequest.HASH_KEY, null);
+        if (hashPref != null && !hashPref.equals(mHash))
+            mHash = hashPref;
+
         getMainRentsPostRequest();
     }
 
@@ -149,8 +155,10 @@ public class MainActivity extends Activity {
                     startActivity(intent);
                 }
             });
+            // In case some styles are not working
             button.setBackground(ContextCompat.getDrawable(getBaseContext(),
                     R.drawable.cyan_button));
+            button.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.darkBlue));
             // Add the button to the layout
             LayoutParams params = new LayoutParams(
                     LayoutParams.MATCH_PARENT,

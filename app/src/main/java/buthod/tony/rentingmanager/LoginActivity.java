@@ -38,7 +38,7 @@ public class LoginActivity extends Activity {
             public void onClick(View v) {
                 // Try to connect to the database.
                 if (mPostRunning) {
-                    Toast.makeText(getBaseContext(), "Connection already running",
+                    Toast.makeText(getBaseContext(), R.string.runningConnection,
                             Toast.LENGTH_SHORT).show();
                 } else {
                     mPostRunning = true;

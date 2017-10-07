@@ -12,6 +12,7 @@
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="sign_in">Sign in</string>
+    <string name="runningConnection">Connection already running</string>
     <!-- Main activity -->
     <string name="sign_out">Sign out</string>
     <!-- Rent activity -->
@@ -33,7 +34,7 @@
     <string name="changeSpinnerTitle">Do you want to continue ?</string>
     <string name="changesWillBeLost">Changes might be lost.</string>
     <string name="changeSaved">Changes have been saved</string>
-    <string name="copyPrices">Copy previous prices</string>
+    <string name="copyPrices">Copy prices</string>
     <!-- Settings activity -->
     <string name="changePassword">Change password</string>
     <string name="old_password">Old password</string>
