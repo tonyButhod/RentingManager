@@ -14,6 +14,8 @@
 
         <ImageButton
             android:id="@+id/back_button"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
             style="@style/BackButton"/>
 
         <View
@@ -21,15 +23,12 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <TextView
-            android:id="@+id/username"
+        <Button
+            android:id="@+id/sign_out"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingRight="15dp"
-            android:layout_gravity="center_vertical"
-            android:theme="@style/RentSpinner">
-
-        </TextView>
+            android:text="@string/sign_out"
+            style="@style/DarkBlueButton"/>
 
     </LinearLayout>
 
@@ -40,5 +39,23 @@
         android:text="@string/changePassword"
         style="@style/CyanButton"
         android:layout_below="@id/toolbar"/>
+
+    <CheckBox
+        android:id="@+id/activate_statistics"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/activate_statistics"
+        style="@style/CyanButton"
+        android:buttonTint="@color/orange"
+        android:layout_below="@id/change_password"/>
+
+    <Button
+        android:id="@+id/message_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/add_remove_message"
+        android:visibility="gone"
+        style="@style/CyanButton"
+        android:layout_below="@id/activate_statistics"/>
 
 </RelativeLayout>

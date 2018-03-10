@@ -13,8 +13,18 @@ while ($rent = $req->fetch()) {
 }
 $req->closeCursor();
 
-  
-echo json_encode(array('username' => $user['username'],
-                       'hash' => $user['password'],
-                       'rents' => $mainRents));
+// Check if a new message is stored
+$req = $bdd->prepare('SELECT m.message FROM message m, user u
+                      WHERE username = :username AND u.message = 1 AND m.id = 1;');
+$req->execute(array('username' => $user['username']));
+$message = $req->fetch();
+$req->closeCursor();
+ 
+$resultArray = array('username' => $user['username'],
+                     'hash' => $user['password'],
+                     'rents' => $mainRents);
+if ($message) {
+  $resultArray['message'] = $message['message'];
+}
+echo json_encode($resultArray);
 ?>

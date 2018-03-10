@@ -1,6 +1,7 @@
 <resources>
     <!-- General -->
     <string name="app_name">Rents</string>
+    <string name="ok">Ok</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="yes">Yes</string>
@@ -8,6 +9,7 @@
     <string name="add">Add</string>
     <string name="remove">Remove</string>
     <string name="tryAgain">Try again</string>
+    <string name="send">Send</string>
     <!-- Login activity -->
     <string name="username">Username</string>
     <string name="password">Password</string>
@@ -15,6 +17,7 @@
     <string name="runningConnection">Connection already running</string>
     <!-- Main activity -->
     <string name="sign_out">Sign out</string>
+    <string name="popup_message_title">Message</string>
     <!-- Rent activity -->
     <string name="tenant">Tenant:</string>
     <string name="tenants">Tenants:</string>
@@ -43,6 +46,12 @@
     <string name="newPasswordSaved">New password saved</string>
     <string name="confirmationIncorrect">Confirmation incorrect</string>
     <string name="atLeast8Char">New password must contain at least 8 characters</string>
+    <string name="activate_statistics">Activate statistics</string>
+    <string name="add_remove_message">Add / Remove a message</string>
+    <string name="add_message">Add a message</string>
+    <string name="messageSent">Message sent</string>
+    <string name="messageRemoved">Message removed</string>
+    <string name="noMessage">No message present</string>
     <!-- Errors -->
     <string name="connectionError">Connection error: check your internet connection.</string>
     <string name="rentNotFreeError">Error: Rent not free this week.</string>
@@ -50,4 +59,5 @@
     <string name="internalError">Internal error</string>
     <string name="accessDeniedError">Username or Password invalid</string>
     <string name="passwordIncorrect">Password incorrect</string>
+    <string name="anErrorOccurred">An error occurred.</string>
 </resources>

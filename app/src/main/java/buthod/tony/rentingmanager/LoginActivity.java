@@ -60,15 +60,15 @@ public class LoginActivity extends Activity {
     private void checkResultRequest(boolean success, String result) {
         if (success) {
             // Save username and hash in sharedPreferences
-            SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS,
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.PREFERENCES_NAME,
                     Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             try {
                 JSONObject resObj = new JSONObject(result);
                 String username = resObj.getString(SendPostRequest.USERNAME_KEY);
                 String hash = resObj.getString(SendPostRequest.HASH_KEY);
-                editor.putString(SendPostRequest.USERNAME_KEY, username);
-                editor.putString(SendPostRequest.HASH_KEY, hash);
+                editor.putString(SettingsActivity.PREF_USERNAME, username);
+                editor.putString(SettingsActivity.PREF_HASH, hash);
                 // Need to write data immediately because it is used in the next activity
                 editor.commit();
                 // Start main activity

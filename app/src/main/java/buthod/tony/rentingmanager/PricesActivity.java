@@ -255,9 +255,10 @@ public class PricesActivity extends Activity {
         // Populate the table of prices by week
         populatePricesTable();
         // Send a post request to access information
-        SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
-        mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
-        mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.PREFERENCES_NAME,
+                Context.MODE_PRIVATE);
+        mUsername = prefs.getString(SettingsActivity.PREF_USERNAME, null);
+        mHash = prefs.getString(SettingsActivity.PREF_HASH, null);
         if (mUsername == null || mHash == null) {
             // Go to main activity
             Intent intent = new Intent(getBaseContext(), MainActivity.class);

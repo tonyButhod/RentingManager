@@ -29,7 +29,6 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             HASH_KEY = "hash",
             ACCESS_KEY = "access",
             OWNERS_KEY = "owners",
-            PREFS = "connexionPrefs",
             RENTS_KEY = "rents",
             SUBRENTS_KEY = "subrents",
             RENT_NAME_KEY = "name",
@@ -42,7 +41,13 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             MIN_DATE_KEY = "minDate",
             NEW_PASSWORD_KEY = "newPassword",
             DATE_KEY = "date",
-            DURATION_KEY = "duration";
+            DURATION_KEY = "duration",
+            MESSAGE_KEY = "message",
+            MESSAGE_ACTION = "messageAction",
+            MESSAGE_NOT_SHOW = "messageNotShow",
+            GET_MESSAGE = "getMessage",
+            REMOVE_MESSAGE = "removeMessage",
+            ADD_MESSAGE = "addMessage";
     // Web pages
     public final static String
             LOGIN = "login.php",
@@ -51,7 +56,8 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             ADD_BOOKING = "addBooking.php",
             REMOVE_BOOKING = "removeBooking.php",
             SET_AND_GET_PRICES = "setAndGetPrices.php",
-            CHANGE_PASSWORD = "changePassword.php";
+            CHANGE_PASSWORD = "changePassword.php",
+            MESSAGE_MANAGER = "messageManager.php";
     // Connection results
     public final static String
             CONNEXION_ERROR = "Connexion error",

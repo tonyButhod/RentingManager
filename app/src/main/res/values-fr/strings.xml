@@ -1,6 +1,7 @@
 <resources>
     <!-- General -->
     <string name="app_name">Locations</string>
+    <string name="ok">Ok</string>
     <string name="cancel">Annuler</string>
     <string name="save">Sauvegarder</string>
     <string name="yes">Oui</string>
@@ -8,6 +9,7 @@
     <string name="add">Ajouter</string>
     <string name="remove">Supprimer</string>
     <string name="tryAgain">Réessayer</string>
+    <string name="send">Envoyer</string>
     <!-- Login activity -->
     <string name="username">Indentifiant</string>
     <string name="password">Mot de passe</string>
@@ -15,6 +17,7 @@
     <string name="runningConnection">Connexion déjà en cours</string>
     <!-- Main activity -->
     <string name="sign_out">Déconnexion</string>
+    <string name="popup_message_title">Message</string>
     <!-- Rent activity -->
     <string name="tenant">Locataire :</string>
     <string name="tenants">Locataires :</string>
@@ -43,6 +46,12 @@
     <string name="newPasswordSaved">Nouveau mot de passe sauvegardé</string>
     <string name="confirmationIncorrect">Confirmation incorrecte</string>
     <string name="atLeast8Char">Nouveau mot de passe doit contenir au moins 8 caractères</string>
+    <string name="activate_statistics">Activer les statistiques</string>
+    <string name="add_remove_message">Ajouter / Supprimer un message</string>
+    <string name="add_message">Ajouter un message</string>
+    <string name="messageSent">Message envoyé</string>
+    <string name="messageRemoved">Message supprimé</string>
+    <string name="noMessage">Aucun message présent</string>
     <!-- Errors -->
     <string name="connectionError">Erreur de connexion : Vérifiez votre connexion internet.</string>
     <string name="rentNotFreeError">Erreur : Location pas libre cette semaine.</string>
@@ -50,4 +59,5 @@
     <string name="internalError">Erreur interne</string>
     <string name="accessDeniedError">Identifiant ou Mot de Passe invalides.</string>
     <string name="passwordIncorrect">Mot de passe incorrect</string>
+    <string name="anErrorOccurred">Une erreur s\'est produite</string>
 </resources>

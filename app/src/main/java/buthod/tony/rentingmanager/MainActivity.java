@@ -2,20 +2,35 @@ package buthod.tony.rentingmanager;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by Tony on 06/08/2017.
@@ -23,29 +38,61 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
 
+    // Variable used to finish this activity when on sign out.
+    public static Activity instance = null;
+
     private Button mUserButton = null;
-    private LinearLayout mRentsLayout = null;
-    private Button mSignOut = null;
     private Button mPostRequest = null;
+    private ViewPager mViewPager = null;
+    private CustomPagerAdapter mPagerAdapter = null;
+    // 2 layouts used for ViewPager
+    private LinearLayout mRentsLayout = null;
+    private LinearLayout mStatisticLayout = null;
 
     private String mUsername = null;
     private String mHash = null; // Contain the hash of the password
+
+    private SharedPreferences mPreferences = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        mPreferences = getSharedPreferences(SettingsActivity.PREFERENCES_NAME,
+                Context.MODE_PRIVATE);
+
+        // Update instance of this activity
+        instance = this;
 
         mUserButton = (Button) findViewById(R.id.user_button);
-        mRentsLayout = (LinearLayout) findViewById(R.id.rents_layout);
-        mSignOut = (Button) findViewById(R.id.sign_out);
         mPostRequest = (Button) findViewById(R.id.post_request);
+        mViewPager = (ViewPager) findViewById(R.id.view_pager);
+
+        // Initialize variables for ViewPager
+        mRentsLayout = new LinearLayout(getBaseContext());
+        mRentsLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT));
+        mRentsLayout.setOrientation(LinearLayout.VERTICAL);
+        mRentsLayout.setPadding(10, 5, 10, 5);
+        mStatisticLayout = new LinearLayout(getBaseContext());
+        mStatisticLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT));
+        mStatisticLayout.setOrientation(LinearLayout.VERTICAL);
+        mStatisticLayout.setPadding(10, 5, 10, 5);
+        mPagerAdapter = new CustomPagerAdapter();
+        mViewPager.setAdapter(mPagerAdapter);
+
+        // TODO : implement the statistic part
+        TextView infoStatistic = new TextView(getBaseContext());
+        infoStatistic.setText("Statistics part");
+        infoStatistic.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.orange));
+        mStatisticLayout.addView(infoStatistic);
+
         // Hide user button at the beginning
         mUserButton.setVisibility(View.GONE);
         // Check preferences for automatic connection
-        SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
-        mUsername = prefs.getString(SendPostRequest.USERNAME_KEY, null);
-        mHash = prefs.getString(SendPostRequest.HASH_KEY, null);
+        mUsername = mPreferences.getString(SettingsActivity.PREF_USERNAME, null);
+        mHash = mPreferences.getString(SettingsActivity.PREF_HASH, null);
         if (mUsername == null || mHash == null) {
             Intent intent = new Intent(getBaseContext(), LoginActivity.class);
             startActivity(intent);
@@ -57,24 +104,8 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 Intent intent = new Intent(getBaseContext(), SettingsActivity.class);
                 intent.putExtra(SendPostRequest.USERNAME_KEY, mUsername);
+                intent.putExtra(SendPostRequest.HASH_KEY, mHash);
                 startActivity(intent);
-            }
-        });
-        // Listener to sign out
-        mSignOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Remove username and hash in sharedPreferences
-                SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS,
-                        Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.remove(SendPostRequest.USERNAME_KEY);
-                editor.remove(SendPostRequest.PASSWORD_KEY);
-                editor.apply();
-                // Start login activity
-                Intent intent = new Intent(getBaseContext(), LoginActivity.class);
-                startActivity(intent);
-                finish();
             }
         });
         // Listener to send a new post request
@@ -91,12 +122,28 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         // Check preferences in case the password has been changed
-        SharedPreferences prefs = getSharedPreferences(SendPostRequest.PREFS, Context.MODE_PRIVATE);
-        String hashPref = prefs.getString(SendPostRequest.HASH_KEY, null);
+        String hashPref = mPreferences.getString(SettingsActivity.PREF_HASH, null);
         if (hashPref != null && !hashPref.equals(mHash))
             mHash = hashPref;
 
         getMainRentsPostRequest();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Update the number of pages of the ViewPagerAdapter if the user change settings
+        if (mPreferences.getBoolean(SettingsActivity.PREF_STAT_ACTIVATED, false))
+            mPagerAdapter.setNumberPages(2);
+        else
+            mPagerAdapter.setNumberPages(1);
+        mViewPager.setAdapter(mPagerAdapter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        MainActivity.instance = null;
+        super.onDestroy();
     }
 
     private void getMainRentsPostRequest() {
@@ -168,5 +215,124 @@ public class MainActivity extends Activity {
         }
         mUserButton.invalidate();
         mRentsLayout.invalidate();
+        // Check if their is a message to display
+        if (resObj.has(SendPostRequest.MESSAGE_KEY)) {
+            String message = resObj.getString(SendPostRequest.MESSAGE_KEY);
+            showPopupMessage(message);
+        }
+    }
+
+    private void showPopupMessage(String message) {
+        message = processMessage(message);
+        // Initialize an alert dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.popup_message_title);
+        // Set the view of the alert dialog
+        LayoutInflater inflater = getLayoutInflater();
+        View alertView = inflater.inflate(R.layout.popup_message, null);
+        builder.setView(alertView);
+        // Get useful view
+        TextView messageView = (TextView) alertView.findViewById(R.id.message);
+        messageView.setText(message);
+        // Set up the buttons
+        Resources res = getResources();
+        builder.setPositiveButton(res.getString(R.string.ok), null);
+        final AlertDialog alertDialog = builder.create();
+        alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                Button b = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                b.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        // Update the database so that the message do not show anymore
+                        SendPostRequest req = new SendPostRequest(SendPostRequest.MESSAGE_MANAGER);
+                        req.addPostParam(SendPostRequest.MESSAGE_ACTION,
+                                SendPostRequest.MESSAGE_NOT_SHOW);
+                        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
+                        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+                        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+                            @Override
+                            public void postExecute(boolean success, String result) {
+                                if (!success) {
+                                    // A connection error occurred
+                                    Toast.makeText(getBaseContext(), R.string.connectionError,
+                                            Toast.LENGTH_LONG).show();
+                                    mPostRequest.setVisibility(View.VISIBLE);
+                                }
+                            }
+                        });
+                        req.execute();
+                        alertDialog.dismiss();
+                    }
+                });
+            }
+        });
+        alertDialog.show();
+    }
+
+    /**
+     * Function used to process the message by replacing some patterns by others using regex.
+     * @param message The message to change.
+     * @return The processed message.
+     */
+    private String processMessage(String message) {
+        // Replace {%NAME%} by the user name
+        String regexName = "\\{%NAME%\\}";
+        return message.replaceAll(regexName, mUsername);
+    }
+
+
+    public class CustomPagerAdapter extends PagerAdapter {
+
+        private int mNumberPages = 1;
+
+        public CustomPagerAdapter() {
+        }
+
+        public void setNumberPages(int numberPages) {
+            mNumberPages = numberPages;
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup collection, int position) {
+            switch (position) {
+                case 0:
+                    collection.addView(mRentsLayout);
+                    return mRentsLayout;
+                case 1:
+                    collection.addView(mStatisticLayout);
+                    return mStatisticLayout;
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void destroyItem(ViewGroup collection, int position, Object view) {
+            switch (position) {
+                case 0:
+                    collection.removeView(mRentsLayout);
+                    break;
+                case 1:
+                    collection.removeView(mStatisticLayout);
+                    break;
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return mNumberPages;
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return view == object;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return "Title custom view pager";
+        }
     }
 }
