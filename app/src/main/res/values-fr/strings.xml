@@ -60,4 +60,22 @@
     <string name="accessDeniedError">Identifiant ou Mot de Passe invalides.</string>
     <string name="passwordIncorrect">Mot de passe incorrect</string>
     <string name="anErrorOccurred">Une erreur s\'est produite</string>
+    <!-- Statistics activity -->
+    <string name="rentsPerMonth">Locations par mois</string>
+    <string-array name="monthNames">
+        <item>JAN</item>
+        <item>FÉV</item>
+        <item>MAR</item>
+        <item>AVR</item>
+        <item>MAI</item>
+        <item>JUN</item>
+        <item>JUL</item>
+        <item>AOÛ</item>
+        <item>SEP</item>
+        <item>OCT</item>
+        <item>NOV</item>
+        <item>DÉC</item>
+    </string-array>
+    <string name="year">Année</string>
+    <string name="globalStatistics">Global</string>
 </resources>

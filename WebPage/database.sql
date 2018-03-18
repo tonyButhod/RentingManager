@@ -64,7 +64,8 @@ CREATE TABLE `price` (
 
 CREATE TABLE `rent` (
   `id` int(11) NOT NULL,
-  `name` varchar(50) COLLATE utf8_unicode_ci NOT NULL
+  `name` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `capacity` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------

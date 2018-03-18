@@ -29,6 +29,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -82,11 +83,8 @@ public class MainActivity extends Activity {
         mPagerAdapter = new CustomPagerAdapter();
         mViewPager.setAdapter(mPagerAdapter);
 
-        // TODO : implement the statistic part
-        TextView infoStatistic = new TextView(getBaseContext());
-        infoStatistic.setText("Statistics part");
-        infoStatistic.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.orange));
-        mStatisticLayout.addView(infoStatistic);
+        // Populate the statistics layout
+        populateStatisticsLayout();
 
         // Hide user button at the beginning
         mUserButton.setVisibility(View.GONE);
@@ -188,29 +186,32 @@ public class MainActivity extends Activity {
         JSONObject resObj = new JSONObject(result);
         JSONArray rents = resObj.getJSONArray(SendPostRequest.RENTS_KEY);
         mUserButton.setText(mUsername);
+        // Parameters and listeners used
+        LayoutParams params = new LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT);
+        params.setMargins(5, 5, 5, 5);
+        View.OnClickListener buttonOnClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getBaseContext(), RentActivity.class);
+                intent.putExtra(SendPostRequest.RENT_NAME_KEY,
+                        ((Button) v).getText().toString());
+                startActivity(intent);
+            }
+        };
+
         for (int i=0; i<rents.length(); i++) {
             JSONObject rent = rents.getJSONObject(i);
             Button button = new Button(
                     new ContextThemeWrapper(getBaseContext(), R.style.CyanButton));
             button.setText(rent.getString(SendPostRequest.RENT_NAME_KEY));
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(getBaseContext(), RentActivity.class);
-                    intent.putExtra(SendPostRequest.RENT_NAME_KEY,
-                            ((Button) v).getText().toString());
-                    startActivity(intent);
-                }
-            });
+            button.setOnClickListener(buttonOnClickListener);
             // In case some styles are not working
             button.setBackground(ContextCompat.getDrawable(getBaseContext(),
                     R.drawable.cyan_button));
             button.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.darkBlue));
             // Add the button to the layout
-            LayoutParams params = new LayoutParams(
-                    LayoutParams.MATCH_PARENT,
-                    LayoutParams.WRAP_CONTENT);
-            params.setMargins(5, 5, 5, 5);
             mRentsLayout.addView(button, params);
         }
         mUserButton.invalidate();
@@ -280,6 +281,39 @@ public class MainActivity extends Activity {
         // Replace {%NAME%} by the user name
         String regexName = "\\{%NAME%\\}";
         return message.replaceAll(regexName, mUsername);
+    }
+
+    /**
+     * Method used to add buttons in the statistics layout
+     */
+    private void populateStatisticsLayout() {
+        ArrayList<String> buttonNames = new ArrayList<>();
+        buttonNames.add(getResources().getString(R.string.rentsPerMonth));
+        // Parameters and listeners used
+        LayoutParams params = new LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT);
+        params.setMargins(5, 5, 5, 5);
+        View.OnClickListener buttonOnClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getBaseContext(), StatisticsActivity.class);
+                intent.putExtra(SendPostRequest.STATISTICS_KEY, R.string.rentsPerMonth);
+                startActivity(intent);
+            }
+        };
+
+        for (final String name : buttonNames) {
+            Button button = new Button(
+                    new ContextThemeWrapper(getBaseContext(), R.style.OrangeButton));
+            // In case some styles are not working
+            button.setBackground(ContextCompat.getDrawable(getBaseContext(),
+                    R.drawable.orange_button));
+            button.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.darkOrange));
+            button.setText(name);
+            button.setOnClickListener(buttonOnClickListener);
+            mStatisticLayout.addView(button, params);
+        }
     }
 
 

@@ -47,7 +47,10 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             MESSAGE_NOT_SHOW = "messageNotShow",
             GET_MESSAGE = "getMessage",
             REMOVE_MESSAGE = "removeMessage",
-            ADD_MESSAGE = "addMessage";
+            ADD_MESSAGE = "addMessage",
+            STATISTICS_KEY = "statistics",
+            CAPACITY_KEY = "capacity",
+            RENTED_DAYS_TIMES_CAPACITY_KEY = "rentedDaysTimesCapacity";
     // Web pages
     public final static String
             LOGIN = "login.php",
@@ -57,7 +60,8 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             REMOVE_BOOKING = "removeBooking.php",
             SET_AND_GET_PRICES = "setAndGetPrices.php",
             CHANGE_PASSWORD = "changePassword.php",
-            MESSAGE_MANAGER = "messageManager.php";
+            MESSAGE_MANAGER = "messageManager.php",
+            STATISTICS_MANAGER = "statisticsManager.php";
     // Connection results
     public final static String
             CONNEXION_ERROR = "Connexion error",

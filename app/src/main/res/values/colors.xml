@@ -9,7 +9,9 @@
     <color name="lightCyan">#DDF0F0</color>
     <color name="cyan">#77DDDD</color>
     <color name="darkCyan">#33AAAA</color>
-    <color name="orange">#ff6600</color>
+    <color name="orange">#ff8431</color>
+    <color name="lightOrange">#fca66d</color>
+    <color name="darkOrange">#893700</color>
     <!-- Calendar colors -->
     <color name="full">#FF7777</color>
     <color name="full_disabled">#FFAAAA</color>
