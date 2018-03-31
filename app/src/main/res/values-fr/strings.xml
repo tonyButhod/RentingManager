@@ -8,6 +8,7 @@
     <string name="no">Non</string>
     <string name="add">Ajouter</string>
     <string name="remove">Supprimer</string>
+    <string name="modify">Modifier</string>
     <string name="tryAgain">Réessayer</string>
     <string name="send">Envoyer</string>
     <!-- Login activity -->
@@ -22,9 +23,9 @@
     <string name="tenant">Locataire :</string>
     <string name="tenants">Locataires :</string>
     <string name="rent">Location :</string>
-    <string name="noRentFree">Location occupée cette semaine</string>
+    <string name="noRentFree">Location occupée ces jours</string>
     <string name="noRentBusy">Aucune réservation à supprimer</string>
-    <string name="noDateSelected">Sélectionnez une semaine sur le calendrier</string>
+    <string name="noDateSelected">Sélectionnez plusieurs jours sur le calendrier</string>
     <string name="addBookingTitle">Ajouter une réservation</string>
     <string name="removeBookingTitle">Supprimer une réservation</string>
     <string name="noBookingRight">Vous n\'avez pas le droit d\'ajouter ou supprimer une réservation</string>
@@ -32,6 +33,7 @@
     <string name="bookingRemoved">Réservation supprimée</string>
     <string name="prices">Prix</string>
     <string name="emptyTenant">Renseignez un locataire</string>
+    <string name="selectDateLabel">Sélectionnez une date</string>
     <!-- Prices activity -->
     <string name="noEditPriceRight">Vous n\'avez pas le droit de modifier les prix</string>
     <string name="changeSpinnerTitle">Voulez-vous continuer ?</string>

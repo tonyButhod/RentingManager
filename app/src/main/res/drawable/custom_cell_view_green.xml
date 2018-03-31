@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:caldroid="http://schemas.android.com/apk/res-auto"
+    xmlns:customCellView="http://schemas.android.com/apk/res-auto">
+
+    <!-- Set the default background -->
+    <item android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp">
+        <shape android:shape="rectangle" >
+            <solid android:color="@color/caldroid_white"/>
+        </shape>
+    </item>
+    <!-- Set the background depending on the rents -->
+    <item>
+        <selector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:caldroid="http://schemas.android.com/apk/res-auto">
+            <item customCellView:state_full="true"
+                android:drawable="@drawable/full_bottom"/>
+            <item customCellView:state_half_full="true"
+                android:drawable="@drawable/half_full_bottom"/>
+        </selector>
+    </item>
+    <item>
+        <selector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:caldroid="http://schemas.android.com/apk/res-auto">
+            <item customCellView:state_prev_full="true"
+                android:drawable="@drawable/full_top"/>
+            <item customCellView:state_prev_half_full="true"
+                android:drawable="@drawable/half_full_top"/>
+        </selector>
+    </item>
+    <!-- Add a line if tenants are different -->
+    <item>
+        <selector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:caldroid="http://schemas.android.com/apk/res-auto">
+            <item customCellView:state_different_tenants="true"
+                android:drawable="@drawable/separation_line"/>
+        </selector>
+    </item>
+    <!-- Add black/white transparent layout if it is selected/disabled -->
+    <item>
+        <selector xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:caldroid="http://schemas.android.com/apk/res-auto">
+            <item android:state_pressed="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/pressed"/>
+                </shape>
+            </item>
+            <item caldroid:state_date_selected="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/pressed"/>
+                </shape>
+            </item>
+            <item caldroid:state_date_prev_next_month="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/disabled"/>
+                </shape>
+            </item>
+        </selector>
+    </item>
+    <!-- Add green stroke -->
+    <item android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp"
+        caldroid:state_date_today="true">
+        <shape android:shape="rectangle" >
+            <stroke android:width="2dp" android:color="@color/green" />
+        </shape>
+    </item>
+
+</layer-list>

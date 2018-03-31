@@ -8,6 +8,7 @@
     <string name="no">No</string>
     <string name="add">Add</string>
     <string name="remove">Remove</string>
+    <string name="modify">Modify</string>
     <string name="tryAgain">Try again</string>
     <string name="send">Send</string>
     <!-- Login activity -->
@@ -22,9 +23,9 @@
     <string name="tenant">Tenant:</string>
     <string name="tenants">Tenants:</string>
     <string name="rent">Rent:</string>
-    <string name="noRentFree">Rent not free this week</string>
+    <string name="noRentFree">Rent not free those days</string>
     <string name="noRentBusy">No booking to remove</string>
-    <string name="noDateSelected">Please select a week on the calendar</string>
+    <string name="noDateSelected">Please select several days on the calendar</string>
     <string name="addBookingTitle">Add a booking</string>
     <string name="removeBookingTitle">Remove a booking</string>
     <string name="noBookingRight">You haven\'t the right to add or remove a booking</string>
@@ -32,6 +33,7 @@
     <string name="bookingRemoved">Booking removed</string>
     <string name="prices">Prices</string>
     <string name="emptyTenant">Please inform a tenant</string>
+    <string name="selectDateLabel">Select a date</string>
     <!-- Prices activity -->
     <string name="noEditPriceRight">No right for editing prices</string>
     <string name="changeSpinnerTitle">Do you want to continue ?</string>

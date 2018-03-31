@@ -65,6 +65,7 @@ public class RentActivity extends FragmentActivity {
     private FrameLayout mCaldroidContainer = null;
     private TextView mTenantsLabel = null;
     private TableLayout mTenants = null;
+    private TextView mSelectDateLabel = null;
     private Button mAddBooking = null;
     private Button mRemoveBooking = null;
     private Button mPrices = null;
@@ -87,6 +88,7 @@ public class RentActivity extends FragmentActivity {
         mBackButton = (ImageButton) findViewById(R.id.back_button);
         mSpinner = (Spinner) findViewById(R.id.list_subrents);
         mCaldroidContainer = (FrameLayout) findViewById(R.id.caldroid_container);
+        mSelectDateLabel = (TextView) findViewById(R.id.select_date_label);
         mAddBooking = (Button) findViewById(R.id.add_booking);
         mRemoveBooking = (Button) findViewById(R.id.remove_booking);
         mPrices = (Button) findViewById(R.id.prices);
@@ -96,6 +98,7 @@ public class RentActivity extends FragmentActivity {
         // Hide views in the activity, show again once a post request succeeds
         mSpinner.setVisibility(View.GONE);
         mCaldroidContainer.setVisibility(View.GONE);
+        mSelectDateLabel.setVisibility(View.GONE);
         mAddBooking.setVisibility(View.GONE);
         mRemoveBooking.setVisibility(View.GONE);
         mPrices.setVisibility(View.GONE);
@@ -182,7 +185,6 @@ public class RentActivity extends FragmentActivity {
         mCaldroidFragment.setCaldroidListener(new CaldroidListener() {
             @Override
             public void onSelectDate(Date date, View view) {
-                // Select the whole week and update tenant
                 mCaldroidFragment.clearSelectedDates();
                 if (mIsOnSelection) {
                     // The user did a long click, several date are selected
@@ -192,6 +194,7 @@ public class RentActivity extends FragmentActivity {
                     Calendar currDate = Calendar.getInstance();
                     currDate.setTime(mSelectedDate);
                     // Estimation of days between 2 dates
+                    // This estimation is used to reduce computation time
                     int daysBetween = (int) ((date.getTime()-mSelectedDate.getTime())/86400000);
                     // Calculate the exact number of days between 2 dates using the previous value
                     currDate.add(Calendar.DATE, daysBetween);
@@ -204,24 +207,35 @@ public class RentActivity extends FragmentActivity {
                         daysBetween--;
                     }
                     if (daysBetween > 0) {
-                        mSelectedDuration = daysBetween + 1;
+                        mSelectedDuration = daysBetween;
                         mCaldroidFragment.setSelectedDates(mSelectedDate, date);
                     }
                     else {
-                        mSelectedDuration = -daysBetween + 1;
+                        mSelectedDuration = -daysBetween;
                         mCaldroidFragment.setSelectedDates(date, mSelectedDate);
                         mSelectedDate = date;
                     }
                 }
                 else {
-                    // Select the clicked date
-                    mSelectedDuration = 1;
+                    // Otherwise, we select the clicked date
+                    mSelectedDuration = 0;
                     mSelectedDate = date;
                     mCaldroidFragment.setSelectedDate(mSelectedDate);
                     updateTenantInfo();
                 }
                 mIsOnSelection = false;
                 mCaldroidFragment.refreshView();
+
+                // Show only useful buttons depending on the number of date selected
+                mSelectDateLabel.setVisibility(View.GONE);
+                if (mSelectedDuration > 0) {
+                    mAddBooking.setVisibility(View.VISIBLE);
+                    mRemoveBooking.setVisibility(View.GONE);
+                }
+                else {
+                    mAddBooking.setVisibility(View.GONE);
+                    mRemoveBooking.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
@@ -237,25 +251,17 @@ public class RentActivity extends FragmentActivity {
                 mIsOnSelection = true;
                 mCaldroidFragment.clearSelectedDates();
                 // Draw a green border on the long clicked date
-                Drawable greenBorder = null;
-                switch (mCaldroidFragment.getBookingState(mSelectedDate)) {
-                    case CaldroidBookingFragment.FREE:
-                        greenBorder = ContextCompat.getDrawable(getBaseContext(),
-                                R.drawable.green_border_default);
-                        break;
-                    case CaldroidBookingFragment.HALF_FULL:
-                        greenBorder = ContextCompat.getDrawable(getBaseContext(),
-                                R.drawable.green_border_half_full);
-                        break;
-                    case CaldroidBookingFragment.FULL:
-                        greenBorder = ContextCompat.getDrawable(getBaseContext(),
-                                R.drawable.green_border_full);
-                        break;
-                }
+                Drawable greenBorder = ContextCompat.getDrawable(getBaseContext(),
+                        R.drawable.custom_cell_view_green);
                 mCaldroidFragment.setBackgroundDrawableForDate(greenBorder, mSelectedDate);
                 mCaldroidFragment.refreshView();
+                // Remove all tenants in the view
                 mTenants.removeAllViews();
                 mTenants.invalidate();
+                // Hide all action buttons (add, remove, modify booking)
+                mSelectDateLabel.setVisibility(View.VISIBLE);
+                mAddBooking.setVisibility(View.GONE);
+                mRemoveBooking.setVisibility(View.GONE);
             }
         });
         // Commit changes
@@ -301,10 +307,9 @@ public class RentActivity extends FragmentActivity {
                         // Save result in local variables
                         parseInfo(result);
                         // Show calendar, buttons, spinner and tenants
+                        mSelectDateLabel.setVisibility(View.VISIBLE);
                         mSpinner.setVisibility(View.VISIBLE);
                         mCaldroidContainer.setVisibility(View.VISIBLE);
-                        mAddBooking.setVisibility(View.VISIBLE);
-                        mRemoveBooking.setVisibility(View.VISIBLE);
                         mPrices.setVisibility(View.VISIBLE);
                         mTenantsLabel.setVisibility(View.VISIBLE);
                         mTenants.setVisibility(View.VISIBLE);
@@ -418,8 +423,10 @@ public class RentActivity extends FragmentActivity {
             // Iterate on booking per sub-rent
             if (subrent.equals(mSelectedSubrent) || subrent.equals(mWholeRent)) {
                 // The rent is full
-                for (RentalBooking.BookingInformation b : mBooking.getAllBookings(subrent))
+                for (RentalBooking.BookingInformation b : mBooking.getAllBookings(subrent)) {
                     mCaldroidFragment.addBooking(b.date, b.duration, CaldroidBookingFragment.FULL);
+                    mCaldroidFragment.addDifferentTenants(b.date, b.duration);
+                }
             }
             else {
                 // The rent can be full or partially rented depending on whether all sub-rents
@@ -439,6 +446,7 @@ public class RentActivity extends FragmentActivity {
                         mCaldroidFragment.addBooking(date, state);
                         cal.add(Calendar.DATE, 1);
                     }
+                    mCaldroidFragment.addDifferentTenants(b.date, b.duration);
                 }
             }
         }
@@ -471,7 +479,7 @@ public class RentActivity extends FragmentActivity {
                     Toast.LENGTH_SHORT).show();
             return;
         }
-        // Check if a date is selected
+        // Check if at least one night is selected
         if (mSelectedDate == null || mSelectedDuration == 0) {
             Toast.makeText(getBaseContext(), R.string.noDateSelected,
                     Toast.LENGTH_SHORT).show();
@@ -499,7 +507,7 @@ public class RentActivity extends FragmentActivity {
         // Set the text of the date view
         Calendar cal = Calendar.getInstance();
         cal.setTime(mSelectedDate);
-        cal.add(Calendar.DATE, mSelectedDuration-1);
+        cal.add(Calendar.DATE, mSelectedDuration);
         SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
         dateView.setText(format.format(mSelectedDate) + " - " + format.format(cal.getTime()));
         // Populate the spinner of alert dialog with free rents.
@@ -634,7 +642,7 @@ public class RentActivity extends FragmentActivity {
                         mBooking.getBookingInformation(selectedRent, mSelectedDate);
                 Calendar cal = Calendar.getInstance();
                 cal.setTime(info.date);
-                cal.add(Calendar.DATE, info.duration-1);
+                cal.add(Calendar.DATE, info.duration);
                 SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
                 dateView.setText(format.format(info.date)+" - "+format.format(cal.getTime()));
             }

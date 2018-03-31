@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <declare-styleable name="customCellView">
+        <attr name="state_full" format="boolean"/>
+        <attr name="state_half_full" format="boolean"/>
+        <attr name="state_prev_full" format="boolean"/>
+        <attr name="state_prev_half_full" format="boolean"/>
+        <attr name="state_different_tenants" format="boolean"/>
+    </declare-styleable>
+</resources>
