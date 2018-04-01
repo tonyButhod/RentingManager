@@ -47,7 +47,8 @@ else {
 }
 $booking = [];
 while ($res = $req->fetch()) {
-  $booking[] = array('rent' => $res['rent'],
+  $booking[] = array('id' => $res['id'],
+                     'rent' => $res['rent'],
                      'date' => date("Ymd", strtotime($res['date'])),
                      'duration' => $res['duration'],
                      'tenant' => $res['tenant']);

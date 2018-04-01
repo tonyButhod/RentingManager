@@ -58,6 +58,7 @@ public class SendPostRequest extends AsyncTask<String, Void, String> {
             GET_RENT_INFO = "getRentInfo.php",
             ADD_BOOKING = "addBooking.php",
             REMOVE_BOOKING = "removeBooking.php",
+            MODIFY_BOOKING = "modifyBooking.php",
             SET_AND_GET_PRICES = "setAndGetPrices.php",
             CHANGE_PASSWORD = "changePassword.php",
             MESSAGE_MANAGER = "messageManager.php",

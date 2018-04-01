@@ -24,13 +24,15 @@
     <string name="tenants">Tenants:</string>
     <string name="rent">Rent:</string>
     <string name="noRentFree">Rent not free those days</string>
-    <string name="noRentBusy">No booking to remove</string>
+    <string name="noRentBusy">No booking selected</string>
     <string name="noDateSelected">Please select several days on the calendar</string>
     <string name="addBookingTitle">Add a booking</string>
     <string name="removeBookingTitle">Remove a booking</string>
+    <string name="modifyBookingTitle">Modify a booking</string>
     <string name="noBookingRight">You haven\'t the right to add or remove a booking</string>
     <string name="newBooking">New booking added</string>
     <string name="bookingRemoved">Booking removed</string>
+    <string name="bookingModified">Booking modified</string>
     <string name="prices">Prices</string>
     <string name="emptyTenant">Please inform a tenant</string>
     <string name="selectDateLabel">Select a date</string>

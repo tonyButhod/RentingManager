@@ -24,13 +24,15 @@
     <string name="tenants">Locataires :</string>
     <string name="rent">Location :</string>
     <string name="noRentFree">Location occupée ces jours</string>
-    <string name="noRentBusy">Aucune réservation à supprimer</string>
+    <string name="noRentBusy">Aucune réservation sélectionnée</string>
     <string name="noDateSelected">Sélectionnez plusieurs jours sur le calendrier</string>
     <string name="addBookingTitle">Ajouter une réservation</string>
     <string name="removeBookingTitle">Supprimer une réservation</string>
+    <string name="modifyBookingTitle">Modifier une réservation</string>
     <string name="noBookingRight">Vous n\'avez pas le droit d\'ajouter ou supprimer une réservation</string>
     <string name="newBooking">Nouvelle réservation ajoutée</string>
     <string name="bookingRemoved">Réservation supprimée</string>
+    <string name="bookingModified">Réservation modifiée</string>
     <string name="prices">Prix</string>
     <string name="emptyTenant">Renseignez un locataire</string>
     <string name="selectDateLabel">Sélectionnez une date</string>

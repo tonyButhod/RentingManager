@@ -46,42 +46,55 @@ if ($user['access'] == 0 && !in_array($user['id'], $owners)) {
   exit();
 }
 
-$bdd->beginTransaction();
-$req = $bdd->prepare('SELECT * FROM booking
-                      WHERE rent = :rent OR rent IN (
-                          SELECT rent FROM subrent WHERE subrent = :rent
-                      );');
-$req->execute(array('rent' => $_POST['rent']));
-/* Check if the rent is free */
-while ($booking = $req->fetch()) {
-  $bookingDate = new DateTime($booking['date']);
-  $startDate = new DateTime($_POST['date']);
-  $endDate = new DateTime($_POST['date']);
-  $endDate->add(new DateInterval('P'.($_POST['duration']-1).'D'));
-  if ($bookingDate <= $endDate) {
-    $bookingDate->add(new DateInterval('P'.($booking['duration']-1).'D'));
-    if ($bookingDate >= $startDate) {
-      /* The rent is not free */
-      echo "Rent not free";
-      exit();
+try {
+  $bdd->beginTransaction();
+  $req = $bdd->prepare('SELECT * FROM booking
+                        WHERE rent = :rent OR rent IN (
+                            SELECT rent FROM subrent WHERE subrent = :rent
+                        );');
+  $req->execute(array('rent' => $_POST['rent']));
+  /* Check if the rent is free */
+  while ($booking = $req->fetch()) {
+    $bookingDate = new DateTime($booking['date']);
+    $startDate = new DateTime($_POST['date']);
+    $endDate = new DateTime($_POST['date']);
+    $endDate->add(new DateInterval('P'.($_POST['duration']-1).'D'));
+    if ($bookingDate <= $endDate) {
+      $bookingDate->add(new DateInterval('P'.($booking['duration']-1).'D'));
+      if ($bookingDate >= $startDate) {
+        /* The rent is not free */
+        echo "Rent not free";
+        exit();
+      }
     }
   }
-}
-$req->closeCursor();
-/* The rent is free, so the booking is inserted */
-$req = $bdd->prepare('INSERT INTO booking (rent, date, duration, tenant)
-                      SELECT :rent, :date, :duration, :tenant;');
-$req->execute(array('rent' => $_POST['rent'],
-                    'date' => DateTime::createFromFormat('Ymd', $_POST['date'])->format('Y-m-d'),
-                    'duration' => $_POST['duration'],
-                    'tenant' => $_POST['tenant']));
-$rowsInserted = $req->rowCount();
-$req->closeCursor();
-$bdd->commit();
+  $req->closeCursor();
+  /* The rent is free, so the booking is inserted */
+  $req = $bdd->prepare('INSERT INTO booking (rent, date, duration, tenant)
+                        SELECT :rent, :date, :duration, :tenant;');
+  $req->execute(array('rent' => $_POST['rent'],
+                      'date' => DateTime::createFromFormat('Ymd', $_POST['date'])->format('Y-m-d'),
+                      'duration' => $_POST['duration'],
+                      'tenant' => $_POST['tenant']));
+  $rowsInserted = $req->rowCount();
+  $req->closeCursor();
+  $bdd->commit();
+  
+  /* Select the id of the inserted row. */
+  $req = $bdd->prepare('SELECT id FROM booking
+                        WHERE rent = :rent AND date = :date;');
+  $req->execute(array('rent' => $_POST['rent'],
+                      'date' => DateTime::createFromFormat('Ymd', $_POST['date'])->format('Y-m-d')));
+  $rowId = $req->fetch()['id'];
+  $req->closeCursor();
 
-if ($rowsInserted == 1)
-  echo "OK";
-else
-  echo "Rent not free";
+  if ($rowsInserted == 1)
+    echo $rowId;
+  else
+    echo "Rent not free";
+}
+catch (PDOException $e) {
+  $bdd->rollback();
+}
 
 ?>

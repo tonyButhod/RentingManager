@@ -116,16 +116,16 @@ public class RentalBooking {
      * @param duration The duration of the booking.
      * @param tenant The tenant.
      */
-    public void addBooking(String rent, Date date, int duration, String tenant) {
+    public void addBooking(long id, String rent, Date date, int duration, String tenant) {
         BookingPerMonth booking = mSubrents.get(rent);
         if (booking != null) {
-            booking.addBooking(date, duration, tenant);
+            booking.addBooking(id, date, duration, tenant);
         }
     }
-    public void addBooking(int id, Date date, int duration, String tenant) {
-        String rent = mIdMap.get(id);
+    public void addBooking(long id, int rentId, Date date, int duration, String tenant) {
+        String rent = mIdMap.get(rentId);
         if (rent != null)
-            addBooking(rent, date, duration, tenant);
+            addBooking(id, rent, date, duration, tenant);
     }
 
     /**
@@ -143,6 +143,13 @@ public class RentalBooking {
         String rent = mIdMap.get(id);
         if (rent != null)
             removeBooking(rent, date);
+    }
+
+    public void modifyBooking(String rent, Date date, String newTenant) {
+        BookingPerMonth booking = mSubrents.get(rent);
+        if (booking != null) {
+            booking.modifyBooking(date, newTenant);
+        }
     }
 
     /**
@@ -227,11 +234,13 @@ public class RentalBooking {
      * Class containing information of a booking.
      */
     public class BookingInformation {
+        public long id;
         public Date date;
         public int duration;
         public String tenant;
 
-        public BookingInformation(Date date, int duration, String tenant) {
+        public BookingInformation(long id, Date date, int duration, String tenant) {
+            this.id = id;
             this.date = date;
             this.duration = duration;
             this.tenant = tenant;
@@ -268,9 +277,9 @@ public class RentalBooking {
          * @param duration The duration.
          * @param tenant The tenant name.
          */
-        public void addBooking(Date date, int duration, String tenant) {
+        public void addBooking(long id, Date date, int duration, String tenant) {
             // Create a new object BookingInformation
-            BookingInformation bookingInfo = new BookingInformation(date, duration, tenant);
+            BookingInformation bookingInfo = new BookingInformation(id, date, duration, tenant);
             Calendar startDate = Calendar.getInstance();
             startDate.setTime(date);
             startDate.set(Calendar.DAY_OF_MONTH, 1);
@@ -394,6 +403,23 @@ public class RentalBooking {
                         removed = false;
                     startDate.add(Calendar.MONTH, 1);
                 }
+            }
+        }
+
+        /**
+         * Modify the tenant of a booking at the given date.
+         * If no booking corresponds to the date, nothing is done.
+         * @param date One date of the booking.
+         */
+        public void modifyBooking(Date date, String newTenant) {
+            // First get the object BookingInformation
+            Calendar startDate = Calendar.getInstance();
+            startDate.setTime(date);
+            startDate.set(Calendar.DAY_OF_MONTH, 1);
+            // Get the booking information object corresponding to the date
+            BookingInformation bookingInfo = getBookingInformation(date);
+            if (bookingInfo != null) {
+                bookingInfo.tenant = newTenant;
             }
         }
 

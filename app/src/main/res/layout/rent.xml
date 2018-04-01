@@ -74,6 +74,13 @@
                     style="@style/CyanButton"/>
 
                 <Button
+                    android:id="@+id/modify_booking"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/modify"
+                    style="@style/CyanButton"/>
+
+                <Button
                     android:id="@+id/remove_booking"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

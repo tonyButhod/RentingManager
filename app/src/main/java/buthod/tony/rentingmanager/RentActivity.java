@@ -68,6 +68,7 @@ public class RentActivity extends FragmentActivity {
     private TextView mSelectDateLabel = null;
     private Button mAddBooking = null;
     private Button mRemoveBooking = null;
+    private Button mModifyBooking = null;
     private Button mPrices = null;
     private ImageButton mBackButton = null;
     private Button mPostRequest = null;
@@ -91,6 +92,7 @@ public class RentActivity extends FragmentActivity {
         mSelectDateLabel = (TextView) findViewById(R.id.select_date_label);
         mAddBooking = (Button) findViewById(R.id.add_booking);
         mRemoveBooking = (Button) findViewById(R.id.remove_booking);
+        mModifyBooking = (Button) findViewById(R.id.modify_booking);
         mPrices = (Button) findViewById(R.id.prices);
         mTenantsLabel = (TextView) findViewById(R.id.tenants_label);
         mTenants = (TableLayout) findViewById(R.id.tenants);
@@ -101,6 +103,7 @@ public class RentActivity extends FragmentActivity {
         mSelectDateLabel.setVisibility(View.GONE);
         mAddBooking.setVisibility(View.GONE);
         mRemoveBooking.setVisibility(View.GONE);
+        mModifyBooking.setVisibility(View.GONE);
         mPrices.setVisibility(View.GONE);
         mTenantsLabel.setVisibility(View.GONE);
         mTenants.setVisibility(View.GONE);
@@ -143,6 +146,12 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void onClick(View v) {
                 showRemoveBookingDialog();
+            }
+        });
+        mModifyBooking.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showModifyBookingDialog();
             }
         });
         mPrices.setOnClickListener(new View.OnClickListener() {
@@ -231,10 +240,12 @@ public class RentActivity extends FragmentActivity {
                 if (mSelectedDuration > 0) {
                     mAddBooking.setVisibility(View.VISIBLE);
                     mRemoveBooking.setVisibility(View.GONE);
+                    mModifyBooking.setVisibility(View.GONE);
                 }
                 else {
                     mAddBooking.setVisibility(View.GONE);
                     mRemoveBooking.setVisibility(View.VISIBLE);
+                    mModifyBooking.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -262,6 +273,7 @@ public class RentActivity extends FragmentActivity {
                 mSelectDateLabel.setVisibility(View.VISIBLE);
                 mAddBooking.setVisibility(View.GONE);
                 mRemoveBooking.setVisibility(View.GONE);
+                mModifyBooking.setVisibility(View.GONE);
             }
         });
         // Commit changes
@@ -386,11 +398,12 @@ public class RentActivity extends FragmentActivity {
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
         for (int i=0; i<bookings.length(); i++) {
             JSONObject booking = bookings.getJSONObject(i);
-            int id_rent = booking.getInt(SendPostRequest.RENT_KEY);
+            long bookingId = booking.getLong(SendPostRequest.ID_KEY);
+            int rentId = booking.getInt(SendPostRequest.RENT_KEY);
             Date date = format.parse(booking.getString(SendPostRequest.DATE_KEY));
             int duration = booking.getInt(SendPostRequest.DURATION_KEY);
             String tenant = booking.getString(SendPostRequest.TENANT_KEY);
-            mBooking.addBooking(id_rent, date, duration, tenant);
+            mBooking.addBooking(bookingId, rentId, date, duration, tenant);
         }
     }
 
@@ -560,6 +573,7 @@ public class RentActivity extends FragmentActivity {
         final Date dateRequest = mSelectedDate;
         final int durationRequest = mSelectedDuration;
         final int rentId = mBooking.getIdRent(rent);
+
         SendPostRequest req = new SendPostRequest(SendPostRequest.ADD_BOOKING);
         req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
@@ -571,22 +585,29 @@ public class RentActivity extends FragmentActivity {
             @Override
             public void postExecute(boolean success, String result) {
                 if (success) {
-                    if (result.equals(SendPostRequest.ACTION_OK)) {
+                    // Try to parse the result as a long value.
+                    try {
+                        // The received value is the booking id of the new booking added.
+                        long bookingId = Long.parseLong(result);
                         Toast.makeText(getBaseContext(), R.string.newBooking,
                                 Toast.LENGTH_SHORT).show();
-                        mBooking.addBooking(rentId, dateRequest, durationRequest, tenant);
+                        mBooking.addBooking(bookingId, rentId, dateRequest, durationRequest, tenant);
                         mSelectedDate = null;
                         mCaldroidFragment.clearSelectedDates();
                         updateCaldroidView();
                         updateTenantInfo();
                     }
-                    else if (result.equals(SendPostRequest.RENT_NOT_FREE)){
-                        Toast.makeText(getBaseContext(), R.string.rentNotFreeError,
-                                Toast.LENGTH_SHORT).show();
-                    }
-                    else {
-                        Toast.makeText(getBaseContext(), R.string.internalError,
-                                Toast.LENGTH_SHORT).show();
+                    catch (NumberFormatException e) {
+                        // An error occurred, the booking was not added.
+                        // Display an error message depending on the result.
+                        if (result.equals(SendPostRequest.RENT_NOT_FREE)){
+                            Toast.makeText(getBaseContext(), R.string.rentNotFreeError,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                        else {
+                            Toast.makeText(getBaseContext(), R.string.internalError,
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
                 else {
@@ -699,6 +720,136 @@ public class RentActivity extends FragmentActivity {
                         mBooking.removeBooking(rentId, dateRequest);
                         mSelectedDate = null;
                         mCaldroidFragment.clearSelectedDates();
+                        updateCaldroidView();
+                        updateTenantInfo();
+                    }
+                    else if (result.equals(SendPostRequest.BOOKING_NOT_EXIST)) {
+                        Toast.makeText(getBaseContext(), R.string.bookingNotExistError,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        Toast.makeText(getBaseContext(), R.string.internalError,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+                else {
+                    // A connection error occurred
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        req.execute();
+    }
+
+    private void showModifyBookingDialog() {
+        // Check if the user has the right to modify a booking
+        if (!mBookingRight) {
+            Toast.makeText(getBaseContext(), R.string.noBookingRight,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Check if a date is selected
+        if (mSelectedDate == null) {
+            Toast.makeText(getBaseContext(), R.string.noDateSelected,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Check if at least one rent is busy
+        List<String> busyRents = mBooking.getBusyRentsForDate(mSelectedDate);
+        if (busyRents.size() == 0) {
+            Toast.makeText(getBaseContext(), R.string.noRentBusy,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Initialize an alert dialog
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(R.string.modifyBookingTitle);
+        // Set the view of the alert dialog
+        LayoutInflater inflater = getLayoutInflater();
+        View alertView = inflater.inflate(R.layout.modify_booking, null);
+        alert.setView(alertView);
+        // Get useful view
+        final EditText tenantView = (EditText) alertView.findViewById(R.id.tenant);
+        final Spinner rentChoice = (Spinner) alertView.findViewById(R.id.rent_choice);
+        final TextView dateView = (TextView) alertView.findViewById(R.id.date);
+        // Update the tenant depending on the selected sub-rent.
+        rentChoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedRent = rentChoice.getSelectedItem().toString();
+                // Set text for tenant
+                tenantView.setText(mBooking.getTenant(selectedRent, mSelectedDate));
+                // Set text for booking date
+                RentalBooking.BookingInformation info =
+                        mBooking.getBookingInformation(selectedRent, mSelectedDate);
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(info.date);
+                cal.add(Calendar.DATE, info.duration);
+                SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
+                dateView.setText(format.format(info.date)+" - "+format.format(cal.getTime()));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        // Populate the spinner of alert dialog with free rents.
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item);
+        adapter.addAll(busyRents);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        rentChoice.setAdapter(adapter);
+        // If the selected rent in the activity is busy, set this rent as default in dialog.
+        if (busyRents.contains(mSelectedSubrent)) {
+            int defaultPos = adapter.getPosition(mSelectedSubrent);
+            rentChoice.setSelection(defaultPos);
+        }
+        // Set up the buttons
+        Resources res = getResources();
+        alert.setPositiveButton(res.getString(R.string.modify),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String selectedRent = rentChoice.getSelectedItem().toString();
+                        RentalBooking.BookingInformation info =
+                                mBooking.getBookingInformation(selectedRent, mSelectedDate);
+                        long bookingId = info.id;
+                        modifyBookingPostRequest(bookingId, tenantView.getText().toString(),
+                                selectedRent, info.date);
+                    }
+                });
+        alert.setNegativeButton(res.getString(R.string.cancel) ,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+        alert.show();
+    }
+
+    /**
+     * Modify a booking on the server.
+     * @param bookingId The booking id, used to identify the booking to modify on the server.
+     * @param newTenant The new tenant name.
+     * @param rent The rent name, used to modify booking internally.
+     * @param date The starting date of the booking, used to modify booking internally.
+     */
+    private void modifyBookingPostRequest(final long bookingId, final String newTenant,
+                                          final String rent, final Date date) {
+        SendPostRequest req = new SendPostRequest(SendPostRequest.MODIFY_BOOKING);
+        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
+        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+        req.addPostParam(SendPostRequest.BOOKING_KEY, bookingId);
+        req.addPostParam(SendPostRequest.TENANT_KEY, newTenant);
+        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+            @Override
+            public void postExecute(boolean success, String result) {
+                if (success) {
+                    if (result.equals(SendPostRequest.ACTION_OK)) {
+                        Toast.makeText(getBaseContext(), R.string.bookingModified,
+                                Toast.LENGTH_SHORT).show();
+                        mBooking.modifyBooking(rent, date, newTenant);
                         updateCaldroidView();
                         updateTenantInfo();
                     }
