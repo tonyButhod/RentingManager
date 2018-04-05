@@ -66,6 +66,7 @@
     <string name="anErrorOccurred">Une erreur s\'est produite</string>
     <!-- Statistics activity -->
     <string name="rentsPerMonth">Locations par mois</string>
+    <string name="rentsPerYear">Locations par année</string>
     <string-array name="monthNames">
         <item>JAN</item>
         <item>FÉV</item>

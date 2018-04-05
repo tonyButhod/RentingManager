@@ -9,6 +9,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -16,13 +17,19 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.NumberPicker;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 
 import org.json.JSONArray;
@@ -32,6 +39,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Tony on 11/03/2018.
@@ -48,9 +56,13 @@ public class StatisticsActivity extends Activity {
     private int mStatistics; // Contains the statistics to display
 
     private BarChart mBarChart = null;
+    private LineChart mLineChart = null;
     private Spinner mRentsSpinner = null;
+    private TextView mYearLabel = null;
     private Button mYearButton = null;
-    private ArrayList<RentsPerMonthsInformation> mRentsPerMonths = new ArrayList<>();
+    private ArrayList<RentsPerMonthInformation> mRentsPerMonth = new ArrayList<>();
+    private SparseArray<SparseArray<Integer> > mRentsPerYear = new SparseArray<>();
+    private SparseArray<RentInformation> mRentsInformation = new SparseArray<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +83,11 @@ public class StatisticsActivity extends Activity {
         switch (mStatistics) {
             case R.string.rentsPerMonth:
                 onCreateRentsPerMonth();
-                getRentsPerMonthsPostRequest();
+                getRentsPerMonthPostRequest();
+                break;
+            case R.string.rentsPerYear:
+                onCreateRentsPerYear();
+                getRentsPerYearPostRequest();
                 break;
         }
     }
@@ -94,7 +110,7 @@ public class StatisticsActivity extends Activity {
         mPostRequest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getRentsPerMonthsPostRequest();
+                getRentsPerMonthPostRequest();
                 mPostRequest.setVisibility(View.GONE);
             }
         });
@@ -102,14 +118,14 @@ public class StatisticsActivity extends Activity {
 
     /// RENTS PER MONTH PART ///
 
-    private class RentsPerMonthsInformation {
+    private class RentsPerMonthInformation {
         public int rentId;
         public String rentName;
         public int capacity;
         // Rented days times capacity for each month of the year.
         public int[] rentedDaysTimesCapacity = new int[12];
 
-        public RentsPerMonthsInformation() {
+        public RentsPerMonthInformation() {
         }
     }
 
@@ -120,6 +136,7 @@ public class StatisticsActivity extends Activity {
         // Get useful widgets
         mBarChart = (BarChart) findViewById(R.id.barChart);
         mRentsSpinner = (Spinner) findViewById(R.id.list_rents);
+        mYearLabel = (TextView) findViewById(R.id.year_label);
         mYearButton = (Button) findViewById(R.id.yearButton);
         // Set bar chart parameters
         mBarChart.getDescription().setEnabled(false);
@@ -147,7 +164,7 @@ public class StatisticsActivity extends Activity {
         mRentsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateRentsPerMonthsBarChart();
+                updateRentsPerMonthBarChart();
             }
 
             @Override
@@ -161,6 +178,7 @@ public class StatisticsActivity extends Activity {
         // Hide widgets
         mBarChart.setVisibility(View.GONE);
         mRentsSpinner.setVisibility(View.GONE);
+        mYearLabel.setVisibility(View.GONE);
         mYearButton.setVisibility(View.GONE);
     }
 
@@ -200,7 +218,7 @@ public class StatisticsActivity extends Activity {
                             public void onClick(View view) {
                                 alertDialog.dismiss();
                                 mYearButton.setText(String.valueOf(numberPicker.getValue()));
-                                getRentsPerMonthsPostRequest();
+                                getRentsPerMonthPostRequest();
                             }
                         });
                     }
@@ -210,7 +228,7 @@ public class StatisticsActivity extends Activity {
         });
     }
 
-    private void getRentsPerMonthsPostRequest() {
+    private void getRentsPerMonthPostRequest() {
         SendPostRequest req = new SendPostRequest(SendPostRequest.STATISTICS_MANAGER);
         req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
         req.addPostParam(SendPostRequest.HASH_KEY, mHash);
@@ -223,10 +241,11 @@ public class StatisticsActivity extends Activity {
                 if (success) {
                     // Parse JSON file
                     try {
-                        parseResultRentsPerMonths(result);
-                        populateRentsPerMonthsSpinner();
+                        parseResultRentsPerMonth(result);
+                        populateRentsPerMonthSpinner();
+                        mYearLabel.setVisibility(View.VISIBLE);
                         mYearButton.setVisibility(View.VISIBLE);
-                        updateRentsPerMonthsBarChart();
+                        updateRentsPerMonthBarChart();
                     }
                     catch (JSONException e) {
                         // Username and password in preferences are not valid.
@@ -240,6 +259,8 @@ public class StatisticsActivity extends Activity {
                     Toast.makeText(getBaseContext(), R.string.connectionError,
                             Toast.LENGTH_LONG).show();
                     mPostRequest.setVisibility(View.VISIBLE);
+                    mYearLabel.setVisibility(View.GONE);
+                    mYearButton.setVisibility(View.GONE);
                 }
             }
         });
@@ -247,18 +268,18 @@ public class StatisticsActivity extends Activity {
     }
 
     /**
-     * Parse the result from the server and save it in private field mRentsPerMonths.
+     * Parse the result from the server and save it in private field mRentsPerMonth.
      * @param result The result to parse.
      * @throws JSONException
      */
-    private void parseResultRentsPerMonths(String result) throws JSONException {
-        mRentsPerMonths.clear();
+    private void parseResultRentsPerMonth(String result) throws JSONException {
+        mRentsPerMonth.clear();
         JSONObject resultObj = new JSONObject(result);
         Iterator<String> keysIterator = resultObj.keys();
         while (keysIterator.hasNext()) {
             String key = keysIterator.next();
             JSONObject rentInfo = resultObj.getJSONObject(key);
-            RentsPerMonthsInformation info = new RentsPerMonthsInformation();
+            RentsPerMonthInformation info = new RentsPerMonthInformation();
             info.rentId = Integer.parseInt(key);
             info.rentName = rentInfo.getString(SendPostRequest.RENT_NAME_KEY);
             info.capacity = rentInfo.getInt(SendPostRequest.CAPACITY_KEY);
@@ -268,14 +289,14 @@ public class StatisticsActivity extends Activity {
                 info.rentedDaysTimesCapacity[i] = rentedDaysTimesCapacity.getInt(i);
             }
 
-            mRentsPerMonths.add(info);
+            mRentsPerMonth.add(info);
         }
     }
 
     /**
      * Populate the spinner for the rents per month.
      */
-    private void populateRentsPerMonthsSpinner() {
+    private void populateRentsPerMonthSpinner() {
         // Save the default selected rent
         String selectedRent = (mRentsSpinner.getSelectedItem() != null) ?
                 mRentsSpinner.getSelectedItem().toString() : null;
@@ -285,8 +306,8 @@ public class StatisticsActivity extends Activity {
         // Save the previous selected rent position
         adapter.add(getResources().getString(R.string.globalStatistics));
         int selectedPosition = 0; // default selection is global statistic
-        for (int i = 0; i < mRentsPerMonths.size(); i++) {
-            String name = mRentsPerMonths.get(i).rentName;
+        for (int i = 0; i < mRentsPerMonth.size(); i++) {
+            String name = mRentsPerMonth.get(i).rentName;
             if (name.equals(selectedRent)) selectedPosition = i + 1;
             adapter.add(name);
         }
@@ -299,7 +320,7 @@ public class StatisticsActivity extends Activity {
     /**
      * Update the bar chart mBarChart with the rent rate per month.
      */
-    private void updateRentsPerMonthsBarChart() {
+    private void updateRentsPerMonthBarChart() {
         // Populate the bar chart with rents rate per months
         int year = Integer.valueOf(mYearButton.getText().toString());
         String selectedRent = mRentsSpinner.getSelectedItem().toString();
@@ -310,8 +331,8 @@ public class StatisticsActivity extends Activity {
         // Takes into account the capacity of the rent.
         float[] rentedDays = {0,0,0,0,0,0,0,0,0,0,0,0};
         int totalCapacity = 0;
-        for (int i = 0; i < mRentsPerMonths.size(); i++) {
-            RentsPerMonthsInformation rentInfo = mRentsPerMonths.get(i);
+        for (int i = 0; i < mRentsPerMonth.size(); i++) {
+            RentsPerMonthInformation rentInfo = mRentsPerMonth.get(i);
             if (selectedRent.equals(rentInfo.rentName) ||
                     selectedRent.equals(globalStatistics)) {
                 totalCapacity += rentInfo.capacity;
@@ -343,5 +364,209 @@ public class StatisticsActivity extends Activity {
         mBarChart.setData(data);
         mBarChart.setVisibility(View.VISIBLE);
         mBarChart.invalidate();
+    }
+
+
+    /// RENTS PER YEAR PART ///
+
+    private class RentInformation {
+        public String rentName;
+        public int capacity;
+
+        public RentInformation() {
+        }
+    }
+
+    private void onCreateRentsPerYear() {
+        setContentView(R.layout.rents_per_year);
+        onCreateCommon();
+
+        // Get useful widgets
+        mLineChart = (LineChart) findViewById(R.id.lineChart);
+        mRentsSpinner = (Spinner) findViewById(R.id.list_rents);
+        // Set line chart parameters
+        mLineChart.getDescription().setEnabled(false);
+        mLineChart.setOnClickListener(null);
+        mLineChart.setOnChartGestureListener(null);
+        mLineChart.setOnChartValueSelectedListener(null);
+        mLineChart.setOnHoverListener(null);
+        // Set rents spinner listener
+        mRentsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateRentsPerYearLineChart();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+
+        // Hide widgets
+        mLineChart.setVisibility(View.GONE);
+        mRentsSpinner.setVisibility(View.GONE);
+    }
+
+    private void getRentsPerYearPostRequest() {
+        SendPostRequest req = new SendPostRequest(SendPostRequest.STATISTICS_MANAGER);
+        req.addPostParam(SendPostRequest.USERNAME_KEY, mUsername);
+        req.addPostParam(SendPostRequest.HASH_KEY, mHash);
+        req.addPostParam(SendPostRequest.STATISTICS_KEY, 1); // 1 is the statistics' id on server
+        req.setOnPostExecute(new SendPostRequest.OnPostExecute() {
+            @Override
+            public void postExecute(boolean success, String result) {
+                if (success) {
+                    // Parse JSON file
+                    try {
+                        parseResultRentsPerYear(result);
+                        populateRentsPerYearSpinner();
+                        updateRentsPerYearLineChart();
+                    }
+                    catch (JSONException e) {
+                        // Username and password in preferences are not valid.
+                        Intent intent = new Intent(getBaseContext(), LoginActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+                else {
+                    // A connection error occurred
+                    Toast.makeText(getBaseContext(), R.string.connectionError,
+                            Toast.LENGTH_LONG).show();
+                    mPostRequest.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        req.execute();
+    }
+
+    /**
+     * Parse the result from the server and save it in private field mRentsPerYear.
+     * @param result The result to parse.
+     * @throws JSONException
+     */
+    private void parseResultRentsPerYear(String result) throws JSONException {
+        JSONObject resultObj = new JSONObject(result);
+        // Parse the rents information
+        mRentsInformation.clear();
+        JSONObject rentsInfoObj = resultObj.getJSONObject(SendPostRequest.RENTS_KEY);
+        Iterator<String> rentsInfoIterator = rentsInfoObj.keys();
+        while (rentsInfoIterator.hasNext()) {
+            String rentId = rentsInfoIterator.next();
+            JSONObject rentInfoObj = rentsInfoObj.getJSONObject(rentId);
+            RentInformation rentInfo = new RentInformation();
+            rentInfo.rentName = rentInfoObj.getString(SendPostRequest.RENT_NAME_KEY);
+            rentInfo.capacity = rentInfoObj.getInt(SendPostRequest.CAPACITY_KEY);
+
+            mRentsInformation.append(Integer.parseInt(rentId), rentInfo);
+        }
+
+        // Parse the rented days times capacity for each rent
+        mRentsPerYear.clear();
+        JSONObject rentedDaysObj = resultObj.getJSONObject(
+                SendPostRequest.RENTED_DAYS_TIMES_CAPACITY_KEY);
+        Iterator<String> yearsIterator = rentedDaysObj.keys();
+        while (yearsIterator.hasNext()) {
+            String yearString = yearsIterator.next();
+            SparseArray<Integer> listRentedDays = new SparseArray();
+            JSONObject rentsObj = rentedDaysObj.getJSONObject(yearString);
+            Iterator<String> rentsIterator = rentsObj.keys();
+            while (rentsIterator.hasNext()) {
+                String rentId = rentsIterator.next();
+                int rentedDaysTimesCapacity = rentsObj.getInt(rentId);
+
+                listRentedDays.append(Integer.parseInt(rentId), rentedDaysTimesCapacity);
+            }
+
+            mRentsPerYear.append(Integer.parseInt(yearString), listRentedDays);
+        }
+    }
+
+    /**
+     * Populate the spinner for the rents per year.
+     */
+    private void populateRentsPerYearSpinner() {
+        // Save the default selected rent
+        String selectedRent = (mRentsSpinner.getSelectedItem() != null) ?
+                mRentsSpinner.getSelectedItem().toString() : null;
+
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this,
+                R.layout.rent_spinner_item);
+        // Save the previous selected rent position
+        adapter.add(getResources().getString(R.string.globalStatistics));
+        int selectedPosition = 0; // default selection is global statistic
+        for (int i = 0; i < mRentsInformation.size(); ++i) {
+            String rentName = mRentsInformation.valueAt(i).rentName;
+            if (rentName.equals(selectedRent)) selectedPosition = i + 1; // Due to the global field.
+            adapter.add(rentName);
+        }
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mRentsSpinner.setAdapter(adapter);
+        mRentsSpinner.setSelection(selectedPosition);
+        mRentsSpinner.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Update the line chart mLineChart with the rent rate per year.
+     */
+    private void updateRentsPerYearLineChart() {
+        String selectedRent = mRentsSpinner.getSelectedItem().toString();
+        Calendar cal = Calendar.getInstance();
+        String globalStatistics = getResources().getString(R.string.globalStatistics);
+
+        // Create the entries and the dataset
+        List<Entry> entries = new ArrayList<>();
+        int minYear = 100000;
+        int maxYear = 0;
+        for (int i = 0; i < mRentsPerYear.size(); ++i) {
+            int year = mRentsPerYear.keyAt(i);
+            if (minYear > year) minYear = year;
+            if (maxYear < year) maxYear = year;
+            int capacity = 0;
+            int rentedDays = 0;
+            float daysInYear = 0;
+
+            SparseArray<Integer> rentedDaysArray = mRentsPerYear.get(year);
+            for (int j = 0; j < rentedDaysArray.size(); ++j) {
+                int rentId = rentedDaysArray.keyAt(j);
+                RentInformation rentInfo = mRentsInformation.get(rentId);
+                if (selectedRent.equals(rentInfo.rentName) ||
+                        selectedRent.equals(globalStatistics)) {
+                    rentedDays += rentedDaysArray.get(rentId);
+                    capacity += rentInfo.capacity;
+                }
+            }
+            cal.set(Calendar.YEAR, year);
+            daysInYear = cal.getActualMaximum(Calendar.DAY_OF_YEAR);
+
+            // Add the rented days. Divide it by the number of years in the year and the capacity
+            //  in order to make a percentage.
+            entries.add(new Entry(year, (float) rentedDays/(daysInYear*capacity)));
+        }
+        LineDataSet dataset = new LineDataSet(entries, getResources().getString(R.string.rentsPerYear));
+        dataset.setColor(ContextCompat.getColor(getBaseContext(), R.color.lightOrange));
+
+
+        // Set X-axis
+        IAxisValueFormatter xFormatter = new IAxisValueFormatter() {
+            @Override
+            public String getFormattedValue(float value, AxisBase axis) {
+                return String.valueOf((int) value);
+            }
+        };
+        XAxis xAxis = mLineChart.getXAxis();
+        xAxis.setAxisMinimum(minYear);
+        xAxis.setAxisMaximum(maxYear);
+        xAxis.setGranularity(1);
+        xAxis.setValueFormatter(xFormatter);
+        mLineChart.setVisibleXRangeMaximum(10.5f);
+        mLineChart.moveViewToX(maxYear); // To align the view on the right
+
+        // Set the data
+        LineData data = new LineData(dataset);
+        mLineChart.setData(data);
+        mLineChart.setVisibility(View.VISIBLE);
+        mLineChart.invalidate();
     }
 }

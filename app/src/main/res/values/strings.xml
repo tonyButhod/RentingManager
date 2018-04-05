@@ -66,6 +66,7 @@
     <string name="anErrorOccurred">An error occurred.</string>
     <!-- Statistics activity -->
     <string name="rentsPerMonth">Rents per month</string>
+    <string name="rentsPerYear">Rents per year</string>
     <string-array name="monthNames">
         <item>JAN</item>
         <item>FEB</item>
