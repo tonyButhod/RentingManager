@@ -245,8 +245,7 @@ public class SettingsActivity extends Activity {
                         }
                     }
                     catch (JSONException e) {
-                        Toast.makeText(getBaseContext(), R.string.anErrorOccurred,
-                                Toast.LENGTH_LONG).show();
+                        // The user do not have the good access right, then do nothing.
                     }
                 }
                 else {

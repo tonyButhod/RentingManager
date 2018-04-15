@@ -296,6 +296,14 @@ public class RentActivity extends FragmentActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        mSelectedDate = null;
+        mSelectedDuration = 0;
+        mCaldroidFragment.clearSelectedDates();
+        updateTenantInfo();
+        mSelectDateLabel.setVisibility(View.GONE);
+        mAddBooking.setVisibility(View.GONE);
+        mRemoveBooking.setVisibility(View.GONE);
+        mModifyBooking.setVisibility(View.GONE);
         getRentInfoPostRequest();
     }
 
